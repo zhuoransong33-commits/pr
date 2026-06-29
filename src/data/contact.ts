@@ -2,9 +2,7 @@ import { Language } from '../../types';
 
 export interface SocialLinks {
   wechat: string;
-  xiaohongshu: string;
-  bilibili: string;
-  px500: string;
+  phone: string;
 }
 
 export interface ContactContent {
@@ -24,36 +22,32 @@ export interface ContactContent {
 export const CONTACT_DATA: Record<Language, ContactContent> = {
   zh: {
     baseLabel: "BASE",
-    locationValue: "Your City, Country",
-    contactLabel: "取得联系",
-    emailMeLabel: "邮箱",
-    email: "your.email@example.com",
+    locationValue: "中国, 江苏",
+    contactLabel: "联系我",
+    emailMeLabel: "发邮件给我",
+    email: "1404782347@QQ.com",
     hello: "你好 ;-)",
     intro: "欢迎探讨与合作。",
     socials: {
-      wechat: "YourWeChatID",
-      xiaohongshu: "YourID",
-      bilibili: "YourID",
-      px500: "YourID"
+      wechat: "Bday23330000",
+      phone: "+86 16638843378"
     },
     githubLabel: "GitHub",
-    footerDesign: "Powered by Gemini 3 Pro"
+    footerDesign: "Powered by Chat GPT 4.0"
   },
   en: {
     baseLabel: "BASE",
-    locationValue: "Your City, Country",
+    locationValue: "Jiangsu, China",
     contactLabel: "Get in touch",
-    emailMeLabel: "Email Me",
-    email: "your.email@example.com",
+    emailMeLabel: "Email Me!!!",
+    email: "1404782347@QQ.com",
     hello: "Hello ;-)",
     intro: "Welcome to discuss & cooperate.",
     socials: {
       wechat: "YourWeChatID",
-      xiaohongshu: "YourID",
-      bilibili: "YourID",
-      px500: "YourID"
+      phone: "16638843378"
     },
     githubLabel: "GitHub",
-    footerDesign: "Powered by Gemini 3 Pro"
+    footerDesign: "Powered by Chat GPT 4.0"
   }
 };

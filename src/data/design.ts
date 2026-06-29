@@ -1,6 +1,6 @@
 import { Project } from '../../types';
 
-export const DESIGN_DATA: Project[] = [
+const DESIGN_DATA_ALL: Project[] = [
   {
     id: 'd1',
     common: {
@@ -147,3 +147,10 @@ export const DESIGN_DATA: Project[] = [
     }
   }
 ];
+
+// These projects are intentionally hidden from the portfolio grid.
+const HIDDEN_DESIGN_PROJECT_IDS = new Set(['d1', 'd2', 'd3', 'd4']);
+
+export const DESIGN_DATA: Project[] = DESIGN_DATA_ALL.filter(
+  ({ id }) => !HIDDEN_DESIGN_PROJECT_IDS.has(id)
+);

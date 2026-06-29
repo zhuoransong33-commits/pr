@@ -17,23 +17,23 @@ export const HOME_DATA: Record<Language, HomeContent> = {
   zh: {
     heroItems: [
       { text: "摄影摄像", annotation: "（作品积累较多）", category: Category.VIDEO }, // category is kept as VIDEO but UI will split
-      { text: "平面交互", annotation: "（当前主攻，兴趣所在）", category: Category.DESIGN },
-      { text: "应用开发", annotation: "（vibe builder）", category: Category.DEV },
-      { text: "炒粉炒饭", annotation: "（还在学）", category: null }
+      { text: "平面交互", annotation: "（兴趣所在）", category: Category.DESIGN },
+      { text: "环境室内设计", annotation: "（专业方向）", category: Category.ENVIRONMENT },
+      { text: "东北地摊烧烤", annotation: "（已出师）", category: null }
     ],
-    intro: "Your personal catchphrase or introduction goes here.",
+    intro: "从未失去探索明天的勇气，始终保持对世界的好奇。",
     selectedWorks: "精选作品",
-    years: "[ 20XX — 20XX ]"
+    years: "[ 2021 — 2026 ]"
   },
   en: {
     heroItems: [
       { text: "Photography & Videography", annotation: "(Extensive Portfolio)", category: Category.VIDEO },
-      { text: "Graphic & UI", annotation: "(Main Focus & Passion)", category: Category.DESIGN },
-      { text: "Development", annotation: "(Vibe Coder)", category: Category.DEV },
-      { text: "Cooking", annotation: "(Still Learning)", category: null }
+      { text: "Graphic & UI", annotation: "(The Passion)", category: Category.DESIGN },
+      { text: "Environment & Interior", annotation: "(Field of Study)", category: Category.ENVIRONMENT },
+      { text: "BBQ", annotation: "(Master Level1)", category: null }
     ],
-    intro: "Your personal catchphrase or introduction goes here.",
+    intro: "Never lose the courage to explore tomorrow, always maintain curiosity about the world.",
     selectedWorks: "Selected Works",
-    years: "[ 20XX — 20XX ]"
+    years: "[ 2021 — 2026 ]"
   }
 };

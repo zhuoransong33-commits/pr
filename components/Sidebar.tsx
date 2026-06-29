@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTriggerGravity
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const isHeroNav = activeTab === 'dashboard' && !isScrolled;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,10 +53,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="cursor-pointer flex items-center gap-2 group shrink-0"
           onClick={() => setActiveTab('dashboard')}
         >
-          <h1 className={`font-black tracking-tighter uppercase transition-all duration-500 ease-in-out text-black dark:text-white leading-none
+          <h1 className={`font-black tracking-tighter uppercase transition-all duration-500 ease-in-out leading-none
+            ${isHeroNav ? 'text-white' : 'text-black dark:text-white'}
             ${isScrolled ? 'text-xl md:text-3xl' : 'text-[clamp(1.25rem,3vw,3rem)]'}
           `}>
-            LUN3CY <span className="hidden sm:inline">FAN</span>
+            <span className="sm:hidden">宋卓冉</span>
+            <span className="hidden sm:inline">ZHUORAN SONG</span>
           </h1>
         </div>
 
@@ -69,25 +72,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setActiveTab(item.id)}
                 className={`
                   text-base md:text-xl font-bold uppercase tracking-wide transition-colors duration-200 relative group whitespace-nowrap
-                  ${isActive ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black dark:hover:text-white'}
+                  ${isHeroNav
+                    ? (isActive ? 'text-white' : 'text-white/45 hover:text-white')
+                    : (isActive ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black dark:hover:text-white')}
                 `}
               >
                 {item.label}
                 {/* Underline for hover/active */}
-                <span className={`absolute -bottom-1 left-0 w-full h-[2px] md:h-[3px] bg-black dark:bg-white transform transition-transform duration-200 ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                <span className={`absolute -bottom-1 left-0 w-full h-[2px] md:h-[3px] ${isHeroNav ? 'bg-white' : 'bg-black dark:bg-white'} transform transition-transform duration-200 ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </button>
             )
           })}
 
           {/* Divider */}
-          <div className="w-[1px] h-6 md:h-8 bg-gray-200 dark:bg-gray-700 shrink-0 mx-2"></div>
+          <div className={`w-[1px] h-6 md:h-8 shrink-0 mx-2 ${isHeroNav ? 'bg-white/30' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
 
           {/* Controls: Language & Theme & Gravity */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
              {/* Language Toggle */}
              <button
                onClick={toggleLanguage}
-               className="p-1 md:p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-black dark:text-white flex items-center gap-1"
+               className={`p-1 md:p-2 rounded-full transition-colors flex items-center gap-1 ${isHeroNav ? 'text-white hover:bg-white/10' : 'text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                title="Switch Language"
              >
                <Globe size={20} className="md:w-6 md:h-6" />
@@ -97,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              {/* Theme Toggle */}
              <button 
                onClick={toggleTheme}
-               className="p-1 md:p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-black dark:text-white"
+               className={`p-1 md:p-2 rounded-full transition-colors ${isHeroNav ? 'text-white hover:bg-white/10' : 'text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                title="Toggle Theme"
              >
                {theme === 'light' ? <Moon size={20} className="md:w-6 md:h-6" /> : <Sun size={20} className="md:w-6 md:h-6" />}
@@ -106,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              {/* Gravity Bonus Toggle */}
              <button 
                onClick={onTriggerGravity}
-               className="p-1 md:p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors text-black dark:text-white"
+               className={`p-1 md:p-2 rounded-full transition-colors ${isHeroNav ? 'text-white hover:bg-red-500/20' : 'text-black dark:text-white hover:bg-red-100 dark:hover:bg-red-900'}`}
                title="Boom!"
              >
                <Bomb size={20} className="md:w-6 md:h-6 hover:text-red-500 transition-colors" />

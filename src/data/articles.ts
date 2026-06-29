@@ -21,7 +21,7 @@ export const ARTICLE_DATA = [
     id: 't1',
     common: {
       category: ArticleCategory.TALK,
-      link: 'https://github.com/yourname',
+      link: 'https://github.com/zhuoransong33-commits',
       coverImage: 'https://via.placeholder.com/800x450?text=Article+Cover',
       date: '2024-01-01'
     },

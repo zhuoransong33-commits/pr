@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import { Sidebar } from './components/Sidebar';
@@ -6,9 +5,7 @@ import { HeroSection } from './components/HeroSection';
 import { PortfolioSection } from './components/PortfolioSection';
 import { ArticleSection } from './components/ArticleSection';
 import { TimelineSection } from './components/TimelineSection';
-import { MusicPlayer } from './components/MusicPlayer';
-import { Mail, MapPin, RotateCcw, MessageSquare, Instagram, Youtube, FileText, Aperture, Github } from 'lucide-react';
-import { NAV_ITEMS } from './src/data/navigation';
+import { Mail, RotateCcw, MessageSquare } from 'lucide-react';
 import { CONTACT_DATA } from './src/data/contact';
 import { ARTICLES_PAGE_DATA } from './src/data/articles';
 import { PORTFOLIO_PAGE_DATA } from './src/data/portfolioPage';
@@ -82,6 +79,13 @@ function App() {
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'zh' ? 'en' : 'zh');
+  };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'portfolio') {
+      setPortfolioCategory('All');
+    }
+    setActiveTab(tab);
   };
 
   const handleHeroNavigation = (category: Category) => {
@@ -367,25 +371,27 @@ function App() {
         return (
           <>
             <HeroSection 
-              onNavigate={(tab) => startViewTransition(() => setActiveTab(tab))} 
+              onNavigate={(tab) => startViewTransition(() => handleTabChange(tab))}
               onCategorySelect={handleHeroNavigation}
               language={language} 
             />
-            <PortfolioSection language={language} externalFilter={portfolioCategory} />
+            <div className="relative z-[80] bg-white dark:bg-black pt-24 transition-colors duration-300">
+              <PortfolioSection language={language} externalFilter={portfolioCategory} />
+            </div>
           </>
         );
       case 'portfolio':
         return (
-          <div className="pt-20 w-full max-w-[96vw] mx-auto">
-             <div className="mb-24">
-               <h1 className="text-[8vw] leading-none font-black mb-8 text-black dark:text-white transition-colors duration-300">
+          <div className="pt-2 md:pt-6 w-full max-w-[96vw] mx-auto">
+             <div className="mb-6 md:mb-10">
+               <h1 className="text-[12vw] sm:text-[10vw] md:text-[7vw] leading-none font-black mb-5 md:mb-6 text-black dark:text-white transition-colors duration-300">
                  {PORTFOLIO_PAGE_DATA[language].title}
                </h1>
-               <p className="text-2xl text-gray-500 dark:text-gray-400 max-w-2xl font-medium transition-colors duration-300">
+               <p className="text-lg md:text-2xl text-gray-500 dark:text-gray-400 max-w-2xl font-medium transition-colors duration-300">
                  {PORTFOLIO_PAGE_DATA[language].description}
                </p>
              </div>
-             <PortfolioSection language={language} externalFilter={portfolioCategory} />
+             <PortfolioSection language={language} externalFilter={portfolioCategory} archiveLayout />
           </div>
         );
       case 'articles':
@@ -404,7 +410,7 @@ function App() {
         );
       case 'about':
         return (
-          <div className="pt-20 w-full max-w-[96vw] mx-auto">
+          <div className="w-full max-w-none mx-auto">
             <TimelineSection language={language} />
           </div>
         );
@@ -461,7 +467,7 @@ function App() {
                  >
                     <MessageSquare size={48} className="mx-auto mb-6 text-gray-400 group-hover:text-[#07C160] transition-colors duration-300" />
                     <h3 className="text-2xl font-bold mb-2 text-black dark:text-white transition-colors duration-300">
-                      {language === 'zh' ? '公众号' : 'WeChat'}
+                      {language === 'zh' ? '微信' : 'WeChat'}
                     </h3>
                     <p className="text-lg opacity-70 text-gray-500 dark:text-gray-400 transition-colors duration-300">
                       {content.socials?.wechat || 'Lun3cy'}
@@ -480,176 +486,6 @@ function App() {
                     </div>
                  </div>
 
-                 {/* Socials - Xiaohongshu */}
-                 <div 
-                    className="block p-12 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] hover:border-[#EC4048] transition-colors duration-300 group cursor-pointer relative"
-                    onClick={() => window.open('https://www.xiaohongshu.com/user/profile/61bbb882000000001000e80d', '_blank')}
-                    onMouseEnter={(e) => {
-                       const tooltip = document.getElementById('red-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '1';
-                          tooltip.style.transform = 'scale(1) translateY(0)';
-                       }
-                    }}
-                    onMouseMove={(e) => {
-                       const tooltip = document.getElementById('red-tooltip');
-                       if (tooltip) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const y = e.clientY - rect.top;
-                          tooltip.style.left = `${x + 20}px`;
-                          tooltip.style.top = `${y + 20}px`;
-                       }
-                    }}
-                    onMouseLeave={() => {
-                       const tooltip = document.getElementById('red-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '0';
-                          tooltip.style.transform = 'scale(0.95) translateY(10px)';
-                       }
-                    }}
-                 >
-                    <Instagram size={48} className="mx-auto mb-6 text-gray-400 group-hover:text-[#EC4048] transition-colors duration-300" />
-                    <h3 className="text-2xl font-bold mb-2 text-black dark:text-white transition-colors duration-300">
-                      {language === 'zh' ? '小红书' : 'RED'}
-                    </h3>
-                    <p className="text-lg opacity-70 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                      {content.socials?.xiaohongshu || 'Lun3cy'}
-                    </p>
-
-                    {/* Glassmorphism Tooltip */}
-                    <div 
-                       id="red-tooltip"
-                       className="absolute z-50 w-64 h-32 bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-2xl pointer-events-none transition-all duration-200 opacity-0 transform scale-95 translate-y-2 overflow-hidden flex items-center justify-center"
-                       style={{ top: 0, left: 0 }}
-                    >
-                       <p className="text-sm font-bold text-black dark:text-white opacity-80 px-4 text-center">
-                          Click to view profile<br/>
-                          <span className="text-xs opacity-50 font-mono">xiaohongshu.com</span>
-                       </p>
-                    </div>
-                 </div>
-
-                 {/* Socials - Bilibili */}
-                 <div 
-                    className="block p-12 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] hover:border-[#00AEEC] transition-colors duration-300 group cursor-pointer relative"
-                    onClick={() => window.open('https://b23.tv/XNNX02Q', '_blank')}
-                    onMouseEnter={(e) => {
-                       const tooltip = document.getElementById('bili-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '1';
-                          tooltip.style.transform = 'scale(1) translateY(0)';
-                       }
-                    }}
-                    onMouseMove={(e) => {
-                       const tooltip = document.getElementById('bili-tooltip');
-                       if (tooltip) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const y = e.clientY - rect.top;
-                          tooltip.style.left = `${x + 20}px`;
-                          tooltip.style.top = `${y + 20}px`;
-                       }
-                    }}
-                    onMouseLeave={() => {
-                       const tooltip = document.getElementById('bili-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '0';
-                          tooltip.style.transform = 'scale(0.95) translateY(10px)';
-                       }
-                    }}
-                 >
-                    <Youtube size={48} className="mx-auto mb-6 text-gray-400 group-hover:text-[#00AEEC] transition-colors duration-300" />
-                    <h3 className="text-2xl font-bold mb-2 text-black dark:text-white transition-colors duration-300">
-                      Bilibili
-                    </h3>
-                    <p className="text-lg opacity-70 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                      {content.socials?.bilibili || 'Lun3cy'}
-                    </p>
-
-                    {/* Glassmorphism Tooltip */}
-                    <div 
-                       id="bili-tooltip"
-                       className="absolute z-50 w-64 h-32 bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-2xl pointer-events-none transition-all duration-200 opacity-0 transform scale-95 translate-y-2 overflow-hidden flex items-center justify-center"
-                       style={{ top: 0, left: 0 }}
-                    >
-                       <p className="text-sm font-bold text-black dark:text-white opacity-80 px-4 text-center">
-                          Click to view profile<br/>
-                          <span className="text-xs opacity-50 font-mono">b23.tv/XNNX02Q</span>
-                       </p>
-                    </div>
-                 </div>
-
-                 {/* Socials - 500px */}
-                 <div 
-                    className="block p-12 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-colors duration-300 group cursor-pointer relative"
-                    onClick={() => window.open('https://500px.com.cn/LuN3cy', '_blank')}
-                    onMouseEnter={(e) => {
-                       const tooltip = document.getElementById('px-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '1';
-                          tooltip.style.transform = 'scale(1) translateY(0)';
-                       }
-                    }}
-                    onMouseMove={(e) => {
-                       const tooltip = document.getElementById('px-tooltip');
-                       if (tooltip) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const y = e.clientY - rect.top;
-                          tooltip.style.left = `${x + 20}px`;
-                          tooltip.style.top = `${y + 20}px`;
-                       }
-                    }}
-                    onMouseLeave={() => {
-                       const tooltip = document.getElementById('px-tooltip');
-                       if (tooltip) {
-                          tooltip.style.opacity = '0';
-                          tooltip.style.transform = 'scale(0.95) translateY(10px)';
-                       }
-                    }}
-                 >
-                    <Aperture size={48} className="mx-auto mb-6 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
-                    <h3 className="text-2xl font-bold mb-2 text-black dark:text-white transition-colors duration-300">
-                      500px
-                    </h3>
-                    <p className="text-lg opacity-70 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                      {content.socials?.px500 || 'LuN3cy'}
-                    </p>
-
-                    {/* Glassmorphism Tooltip */}
-                    <div 
-                       id="px-tooltip"
-                       className="absolute z-50 w-64 h-32 bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-2xl pointer-events-none transition-all duration-200 opacity-0 transform scale-95 translate-y-2 overflow-hidden flex items-center justify-center"
-                       style={{ top: 0, left: 0 }}
-                    >
-                       <p className="text-sm font-bold text-black dark:text-white opacity-80 px-4 text-center">
-                          Click to view profile<br/>
-                          <span className="text-xs opacity-50 font-mono">500px.com.cn</span>
-                       </p>
-                    </div>
-                 </div>
-
-                 {/* GitHub */}
-                 <div 
-                    className="block p-12 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] relative group cursor-pointer hover:border-black dark:hover:border-white transition-colors duration-300"
-                    onClick={() => window.open('https://github.com/LuN3cy', '_blank')}
-                 >
-                    <Github size={48} className="mx-auto mb-6 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
-                    {/* Custom Floating Color for Github Icon on Hover */}
-                    <style>{`
-                      .group:hover .text-gray-400.group-hover\\:text-black { color: #0D1932 !important; }
-                      .dark .group:hover .text-gray-400.dark\\:group-hover\\:text-white { color: #0D1932 !important; }
-                      .group:hover.hover\\:border-black { border-color: #0D1932 !important; }
-                      .dark .group:hover.dark\\:hover\\:border-white { border-color: #0D1932 !important; }
-                    `}</style>
-                    <h3 className="text-2xl font-bold mb-2 text-black dark:text-white transition-colors duration-300">
-                      {content.githubLabel}
-                    </h3>
-                    <p className="text-lg opacity-70 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                      @LuN3cy
-                    </p>
-                 </div>
               </div>
            </div>
         )
@@ -657,24 +493,25 @@ function App() {
         return (
           <>
             <HeroSection 
-              onNavigate={(tab) => startViewTransition(() => setActiveTab(tab))} 
+              onNavigate={(tab) => startViewTransition(() => handleTabChange(tab))}
               onCategorySelect={handleHeroNavigation}
               language={language} 
             />
-            <PortfolioSection language={language} externalFilter={portfolioCategory} />
+            <div className="relative z-[80] bg-white dark:bg-black pt-24 transition-colors duration-300">
+              <PortfolioSection language={language} externalFilter={portfolioCategory} />
+            </div>
           </>
         );
     }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans selection:bg-black dark:selection:bg-white selection:text-white dark:selection:text-black overflow-x-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans selection:bg-black dark:selection:bg-white selection:text-white dark:selection:text-black overflow-x-clip transition-colors duration-300">
       
-      <MusicPlayer language={language} />
       {/* Dynamic Navigation */}
       <Sidebar 
         activeTab={activeTab} 
-        setActiveTab={(tab) => startViewTransition(() => setActiveTab(tab))} 
+        setActiveTab={(tab) => startViewTransition(() => handleTabChange(tab))}
         language={language}
         toggleLanguage={toggleLanguage}
         theme={theme}
@@ -683,14 +520,14 @@ function App() {
       />
 
       {/* Main Content Area */}
-      <main className="w-full pt-40 pb-32 vt-page">
-         <div key={activeTab} className="animate-fade-in">
+      <main className={`w-full ${activeTab === 'portfolio' || activeTab === 'about' ? 'pt-24 pb-0' : 'pt-40 pb-32'} vt-page`}>
+         <div key={activeTab} className={activeTab === 'about' ? '' : 'animate-fade-in'}>
            {renderContent()}
          </div>
 
          {/* Footer */}
-         <footer className="w-full max-w-[96vw] mx-auto mt-32 border-t-2 border-black dark:border-white pt-12 flex flex-col md:flex-row justify-between items-center text-sm font-light text-gray-400 dark:text-gray-500 uppercase tracking-wide gap-4 transition-colors duration-300">
-            <p>© 2026 LUN3CY FAN</p>
+         <footer className={`${activeTab === 'portfolio' || activeTab === 'about' ? 'hidden' : 'flex'} w-full max-w-[96vw] mx-auto mt-32 border-t-2 border-black dark:border-white pt-12 flex-col md:flex-row justify-between items-center text-sm font-light text-gray-400 dark:text-gray-500 uppercase tracking-wide gap-4 transition-colors duration-300`}>
+            <p>© 2026 ZHUORAN SONG</p>
             <p>{content.footerDesign}</p>
          </footer>
       </main>
@@ -703,7 +540,7 @@ function App() {
             className="pointer-events-auto bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-full font-bold text-xl shadow-2xl animate-fade-in hover:scale-110 transition-transform flex items-center gap-3 cursor-pointer"
           >
             <RotateCcw size={24} />
-            {language === 'zh' ? '变回去' : 'Go Back'}
+            {language === 'zh' ? '返回' : 'Go Back'}
           </button>
         </div>
       )}

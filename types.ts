@@ -6,7 +6,7 @@ export enum Category {
   VIDEO = 'Videography',
   DESIGN = 'Graphics & UI',
   PHOTO = 'Photography',
-  DEV = 'Development',
+  ENVIRONMENT = 'Environment Design',
   ARTICLE = 'Article'
 }
 
@@ -27,34 +27,42 @@ export interface Article {
   date?: string;
 }
 
-export interface Project {
-  id: string;
+export interface ProjectContent {
   title: string;
   subtitle: string;
-  category: Category;
   description: string;
   role: string;
-  image: string; // URL placeholder (Cover/Thumbnail)
-  videoUrl?: string; // URL to .mp4 file
-  bilibiliId?: string; // Bilibili Video ID (e.g. BV1xx...)
-  figmaUrl?: string; // Figma File URL
-  gallery?: string[]; // Additional images (URLs)
-  externalLink?: string; // External link (e.g. Bilibili, Behance)
   tags: string[];
-  // New detailed fields
+  awards?: string[];
   concept?: string;
   roleDetail?: string;
-  awards?: string[]; // Array of award strings
-  
-  // Special field for placeholder UI
+}
+
+export interface ProjectCommon {
+  category: Category | string;
+  image: string; // URL placeholder (Cover/Thumbnail)
+  figmaUrl?: string; // Figma File URL
+  gallery?: string[]; // Additional images (URLs)
+  videoUrl?: string; // URL to .mp4 file
+  bilibiliId?: string; // Bilibili Video ID (e.g. BV1xx...)
+  externalLink?: string; // External link (e.g. Bilibili, Behance)
+  websiteUrl?: string; // Online preview URL
+  githubUrl?: string; // GitHub repository URL
+}
+
+export interface Project {
+  id: string;
+  common: ProjectCommon;
+  zh: ProjectContent;
+  en: ProjectContent;
+}
+
+export interface ProjectDisplay extends ProjectCommon, ProjectContent {
+  id: string;
   bilingualTitle?: {
     zh: string;
     en: string;
   };
-
-  websiteUrl?: string; // Online preview URL
-  githubUrl?: string; // GitHub repository URL
-  icon?: string; // Icon name for Dev projects
 }
 
 export interface Experience {

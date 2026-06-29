@@ -1,5 +1,4 @@
-import { Category, Project, Experience, Skill, Language, HonorsData, Article, ArticleCategory } from './types';
-import { Sparkles, Image, History, Send } from 'lucide-react';
+import { ProjectDisplay, Language, Article, ArticleCategory } from './types';
 import { PROJECT_DATA } from './src/data/projects';
 import { ARTICLE_DATA } from './src/data/articles';
 
@@ -9,14 +8,14 @@ export const CATEGORY_LABELS: Record<Language, Record<string, string>> = {
     'Videography': '动态影像', // Renamed
     'Graphics & UI': '平面交互',
     'Photography': '静态摄影', // Renamed
-    'Development': '应用开发'
+    'Environment Design': '环境 / 室内设计'
   },
   en: {
     'All': 'All',
     'Videography': 'Videography',
     'Graphics & UI': 'Graphics & UI',
     'Photography': 'Photography',
-    'Development': 'Development'
+    'Environment Design': 'Environment & Interior'
   }
 };
 
@@ -39,7 +38,7 @@ export const ARTICLE_LABELS: Record<Language, Record<string, string>> = {
   }
 };
 
-export const PROJECTS: Record<Language, Project[]> = {
+export const PROJECTS: Record<Language, ProjectDisplay[]> = {
   zh: PROJECT_DATA.map(p => ({
     id: p.id,
     ...p.common,

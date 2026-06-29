@@ -37,3 +37,11 @@ src/assets/photography/
 
 # Secure payloads (local-only)
 secure/
+
+# Local preview logs
+.vite-preview*.log
+
+# Vercel local project metadata
+.vercel/
+
+.vercel
