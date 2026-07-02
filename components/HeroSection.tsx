@@ -139,6 +139,8 @@ const enFolders: ArchiveFolder[] = zhFolders.map((folder) => {
 });
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+let heroWheelGate: { direction: 1 | -1; index: number; time: number } | null = null;
+let heroWheelCooldown = 0;
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategorySelect, language }) => {
   const content = HOME_DATA[language];
@@ -176,6 +178,99 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
     };
   }, []);
 
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      const root = heroRef.current;
+      if (!root || Math.abs(event.deltaY) < 18) return;
+
+      const folders = [...root.querySelectorAll('[data-hero-folder]')] as HTMLElement[];
+      if (folders.length === 0) return;
+      const dockTop = Number.parseFloat(window.getComputedStyle(folders[0]).top || '0');
+      const rootTop = root.getBoundingClientRect().top + window.scrollY;
+      const getFolderSnapTop = (folder: HTMLElement) => rootTop + folder.offsetTop - dockTop;
+      const direction: 1 | -1 = event.deltaY > 0 ? 1 : -1;
+      const snapTops = folders.map(getFolderSnapTop);
+      const currentY = window.scrollY;
+      const closestIndex = snapTops.reduce((bestIndex, snapTop, index) => {
+        return Math.abs(snapTop - currentY) < Math.abs(snapTops[bestIndex] - currentY) ? index : bestIndex;
+      }, 0);
+      const closestDistance = Math.abs(snapTops[closestIndex] - currentY);
+      const isInStackRange = currentY >= snapTops[0] - window.innerHeight * 0.22
+        && currentY <= snapTops[snapTops.length - 1] + window.innerHeight * 0.7;
+
+      if (!isInStackRange) return;
+
+      const now = window.performance.now();
+      if (now < heroWheelCooldown) {
+        event.preventDefault();
+        return;
+      }
+
+      const pendingGate = heroWheelGate;
+      const isPendingSecondWheel = pendingGate && pendingGate.direction === direction && now - pendingGate.time < 1800;
+      if (isPendingSecondWheel) {
+        const targetIndex = pendingGate.index + direction;
+        if (targetIndex >= 0 && targetIndex < snapTops.length) {
+          event.preventDefault();
+          heroWheelGate = null;
+          heroWheelCooldown = now + 520;
+          window.setTimeout(() => {
+            window.scrollTo({
+              top: snapTops[targetIndex],
+              behavior: 'smooth',
+            });
+          }, 80);
+          return;
+        }
+      }
+
+      if (closestDistance > 4) {
+        event.preventDefault();
+        heroWheelGate = null;
+        heroWheelCooldown = now + 380;
+        window.setTimeout(() => {
+          window.scrollTo({
+            top: snapTops[closestIndex],
+            behavior: 'smooth',
+          });
+        }, 80);
+        return;
+      }
+
+      const settledIndex = closestIndex;
+      const hasNextFolder = direction > 0
+        ? settledIndex < folders.length - 1
+        : settledIndex > 0;
+      if (!hasNextFolder) {
+        heroWheelGate = null;
+        return;
+      }
+
+      const gate = heroWheelGate;
+      const isSecondWheel = gate && gate.direction === direction && gate.index === settledIndex && now - gate.time < 1800;
+
+      if (!isSecondWheel) {
+        event.preventDefault();
+        heroWheelGate = { direction, index: settledIndex, time: now };
+        return;
+      }
+
+      heroWheelGate = null;
+      heroWheelCooldown = now + 520;
+      event.preventDefault();
+      window.setTimeout(() => {
+        window.scrollTo({
+          top: snapTops[settledIndex + direction],
+          behavior: 'smooth',
+        });
+      }, 80);
+    };
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   const handleFolderClick = (category: Category | null) => {
     if (category) {
       onCategorySelect(category);
@@ -192,6 +287,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
   return (
     <div
       ref={heroRef}
+      data-hero-root
       className="relative left-1/2 w-screen -mt-40 bg-[#121212] text-white animate-fade-in overflow-visible"
       style={{ marginLeft: '-50vw' }}
     >
@@ -223,6 +319,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
           return (
             <article
               key={folder.id}
+              data-hero-folder
               className="sticky overflow-hidden flex flex-col"
               style={{
                 top: folderDockTop,

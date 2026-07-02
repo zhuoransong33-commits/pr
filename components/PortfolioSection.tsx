@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { PROJECTS, CATEGORY_LABELS } from '../constants';
 import { Category, Language, ProjectDisplay } from '../types';
 import { PHOTOGRAPHY_GALLERY } from '../src/data/photography';
+import { LOCAL_PHOTOGRAPHY_COLLECTIONS, LocalPortfolioCollection } from '../src/data/localPortfolio';
 import { ArrowUpRight, X, Github, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PortfolioSectionProps {
@@ -386,6 +387,326 @@ const getArchiveProjects = (projects: any[], category: string) => {
   ];
 };
 
+const shuffleImages = (images: string[]) => {
+  const next = [...images];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+  return next;
+};
+
+const PhotoStackViewer = ({
+  images,
+  title,
+}: {
+  images: string[];
+  title: string;
+}) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragStart, setDragStart] = useState<number | null>(null);
+  const [dragDelta, setDragDelta] = useState(0);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [imageAspects, setImageAspects] = useState<Record<number, number>>({});
+
+  const goPrev = () => setActiveIndex((current) => Math.max(0, current - 1));
+  const goNext = () => setActiveIndex((current) => Math.min(images.length - 1, current + 1));
+  const currentAspect = imageAspects[activeIndex] || 0.78;
+  const stageWidth = currentAspect >= 1
+    ? 'min(82vw, 54rem)'
+    : 'min(74vw, 36rem)';
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStart === null) return;
+    const distance = event.clientX - dragStart;
+    setDragStart(null);
+    setDragDelta(0);
+
+    if (Math.abs(distance) < 8) {
+      setExpandedIndex(activeIndex);
+      return;
+    }
+    if (distance > 56) goPrev();
+    if (distance < -56) goNext();
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') goPrev();
+      if (event.key === 'ArrowRight') goNext();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [images.length]);
+
+  if (images.length === 0) {
+    return (
+      <div className="flex min-h-[32rem] items-center justify-center border border-dotted border-black/40 text-sm font-mono uppercase tracking-[0.14em] text-black/45">
+        No images
+      </div>
+    );
+  }
+
+  const visibleIndexes = images
+    .map((_, index) => index)
+    .filter((index) => Math.abs(index - activeIndex) <= 4);
+
+  return (
+    <div className="photo-stack-shell">
+      <div
+        className="photo-stack-stage"
+        style={{
+          width: stageWidth,
+          aspectRatio: String(currentAspect),
+        }}
+        onPointerDown={(event) => {
+          setDragStart(event.clientX);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          if (dragStart === null) return;
+          setDragDelta(event.clientX - dragStart);
+        }}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => {
+          setDragStart(null);
+          setDragDelta(0);
+        }}
+      >
+        {visibleIndexes.map((index) => {
+          const offset = index - activeIndex;
+          const isCurrent = offset === 0;
+          const absOffset = Math.abs(offset);
+          const activeDragOffset = isCurrent && dragStart !== null ? dragDelta / 16 : 0;
+          const translateX = offset < 0
+            ? Math.max(offset * 2.7, -8.4)
+            : Math.min(offset * 2.7, 8.4);
+          const translateY = offset < 0
+            ? Math.min(absOffset * 1.05, 3.2)
+            : Math.min(absOffset * 1.05, 3.2);
+          const scale = Math.max(0.84, 1 - absOffset * 0.055);
+          const rotate = offset < 0
+            ? Math.max(offset * 1.25, -4.5)
+            : Math.min(offset * 1.25, 4.5);
+
+          return (
+            <button
+              key={images[index]}
+              type="button"
+              aria-label={`${title} ${index + 1}`}
+              onClick={() => {
+                if (isCurrent) return;
+                if (index < activeIndex) goPrev();
+                if (index > activeIndex) goNext();
+              }}
+              className={`photo-stack-card ${isCurrent ? 'is-current' : ''} ${offset < 0 ? 'is-past' : 'is-next'}`}
+              style={{
+                zIndex: 100 - Math.abs(offset) + (offset < 0 ? 0 : 12),
+                opacity: isCurrent ? 1 : Math.max(0.2, 0.86 - absOffset * 0.13),
+                transform: `translate3d(${translateX + activeDragOffset}rem, ${translateY}rem, 0) rotate(${rotate + activeDragOffset * 0.35}deg) scale(${scale})`,
+              }}
+            >
+              <img
+                src={images[index]}
+                alt={`${title} ${index + 1}`}
+                loading={absOffset <= 1 ? 'eager' : 'lazy'}
+                decoding="async"
+                draggable={false}
+                onLoad={(event) => {
+                  const image = event.currentTarget;
+                  if (!image.naturalWidth || !image.naturalHeight) return;
+                  setImageAspects((current) => ({
+                    ...current,
+                    [index]: image.naturalWidth / image.naturalHeight,
+                  }));
+                }}
+              />
+              {isCurrent && <span className="photo-stack-zoom-hit" />}
+              {!isCurrent && <span className="photo-stack-tint" />}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="photo-stack-controls">
+        <button type="button" onClick={goPrev} disabled={activeIndex === 0} aria-label="Previous image">
+          <ChevronLeft size={18} />
+        </button>
+        <span>{String(activeIndex + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')}</span>
+        <button type="button" onClick={goNext} disabled={activeIndex === images.length - 1} aria-label="Next image">
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      {expandedIndex !== null && (
+        <div className="photo-stack-lightbox" onClick={() => setExpandedIndex(null)}>
+          <button
+            type="button"
+            className="photo-stack-lightbox-close"
+            onClick={() => setExpandedIndex(null)}
+            aria-label="Close enlarged image"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={images[expandedIndex]}
+            alt={`${title} ${expandedIndex + 1}`}
+            draggable={false}
+          />
+        </div>
+      )}
+
+      <style>{`
+        .photo-stack-shell {
+          position: relative;
+          display: grid;
+          justify-items: center;
+          gap: 1.4rem;
+          width: 100%;
+        }
+
+        .photo-stack-stage {
+          position: relative;
+          max-height: min(52svh, 38rem);
+          min-height: min(42svh, 25rem);
+          touch-action: none;
+          cursor: grab;
+          user-select: none;
+          transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1), aspect-ratio 420ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .photo-stack-stage:active {
+          cursor: grabbing;
+        }
+
+        .photo-stack-card {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          border-radius: 1.45rem;
+          border: 1px solid rgba(255, 255, 255, 0.86);
+          background: #f8f7f2;
+          padding: clamp(0.42rem, 1vw, 0.72rem);
+          box-shadow: 0 2.2rem 5rem rgba(0, 0, 0, 0.26);
+          transform-origin: center center;
+          transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 360ms ease, filter 360ms ease;
+        }
+
+        .photo-stack-card.is-past,
+        .photo-stack-card.is-next {
+          filter: brightness(0.86) saturate(1.08) hue-rotate(12deg);
+        }
+
+        .photo-stack-card.is-current {
+          filter: none;
+        }
+
+        .photo-stack-card img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          pointer-events: none;
+          border-radius: calc(1.45rem - clamp(0.42rem, 1vw, 0.72rem));
+        }
+
+        .photo-stack-zoom-hit {
+          position: absolute;
+          inset: 0;
+          cursor: zoom-in;
+        }
+
+        .photo-stack-tint {
+          position: absolute;
+          inset: clamp(0.42rem, 1vw, 0.72rem);
+          border-radius: calc(1.45rem - clamp(0.42rem, 1vw, 0.72rem));
+          background: linear-gradient(90deg, rgba(0, 28, 32, 0.08), rgba(0, 145, 132, 0.32));
+          pointer-events: none;
+        }
+
+        .photo-stack-controls {
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 0.55rem 0.65rem;
+          border: 1px solid rgba(23, 23, 23, 0.24);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.38);
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+          font-size: 0.78rem;
+          letter-spacing: 0.1em;
+        }
+
+        .photo-stack-controls button {
+          display: inline-grid;
+          place-items: center;
+          width: 2.1rem;
+          height: 2.1rem;
+          border-radius: 999px;
+          background: #171717;
+          color: white;
+          transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .photo-stack-controls button:hover:not(:disabled) {
+          transform: translateY(-1px);
+        }
+
+        .photo-stack-controls button:disabled {
+          opacity: 0.25;
+          cursor: not-allowed;
+        }
+
+        .photo-stack-lightbox {
+          position: fixed;
+          inset: 0;
+          z-index: 180;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(1rem, 4vw, 4rem);
+          background: rgba(0, 0, 0, 0.88);
+          cursor: zoom-out;
+        }
+
+        .photo-stack-lightbox img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          border-radius: 0.8rem;
+          box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.5);
+        }
+
+        .photo-stack-lightbox-close {
+          position: fixed;
+          top: 1.2rem;
+          right: 1.2rem;
+          display: grid;
+          place-items: center;
+          width: 3rem;
+          height: 3rem;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          color: white;
+        }
+
+        @media (max-width: 767px) {
+          .photo-stack-stage {
+            max-width: 84vw;
+            max-height: 46svh;
+            min-height: 18rem;
+          }
+
+          .photo-stack-card {
+            border-radius: 1.1rem;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const CategoryArchiveDetail = ({
   language,
   category,
@@ -400,8 +721,227 @@ const CategoryArchiveDetail = ({
   onProjectSelect: (project: ProjectDisplay) => void;
 }) => {
   const folder = getArchiveFolder(category);
+  const localCollection: null | (LocalPortfolioCollection & { images: string[] }) = null;
   const rows = getArchiveProjects(projects, category);
   const title = language === 'zh' ? folder.zh : folder.en;
+  const localTitle = localCollection?.title[language] || title;
+  const localDescription = localCollection?.description[language] || '';
+  const [activePhotoCollection, setActivePhotoCollection] = useState<(LocalPortfolioCollection & { images: string[] }) | null>(null);
+
+  if (category === Category.PHOTO) {
+    const previewTitle = activePhotoCollection?.title[language] || title;
+    const previewDescription = activePhotoCollection?.description[language] || '';
+
+    return (
+      <section className="relative w-full -mt-6 md:-mt-10 min-h-[calc(100svh-6rem)] bg-white dark:bg-black text-black dark:text-white animate-fade-in">
+        <button
+          onClick={() => {
+            if (activePhotoCollection) {
+              setActivePhotoCollection(null);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              return;
+            }
+            onBack();
+          }}
+          className="absolute left-5 md:left-8 top-6 md:top-8 z-20 font-mono text-xs md:text-sm uppercase tracking-[0.14em] hover:translate-x-[-4px] transition-transform"
+        >
+          ← {activePhotoCollection
+            ? (language === 'zh' ? '返回静态摄影' : 'Back to Photography')
+            : (language === 'zh' ? '返回所有作品' : 'See All Works')}
+        </button>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[24vw_minmax(0,1fr)] min-h-[calc(100svh-6rem)]">
+          <aside className="relative hidden xl:block">
+            <div className="absolute left-1/2 top-[24%] h-[27rem] w-[8rem] -translate-x-1/2 rotate-[-18deg] rounded-[1.6rem] border border-black/10 bg-gradient-to-b from-white/95 to-slate-200/30 shadow-2xl opacity-80">
+              <div className="absolute left-1/2 top-[-2.4rem] h-20 w-20 -translate-x-1/2 rounded-full border-[10px] border-slate-300/60 bg-white/60" />
+              <div className="absolute inset-4 rounded-[1rem] border border-white/80 bg-white/20" />
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rotate-90 font-serif text-6xl tracking-[-0.08em] text-slate-500/70">
+                {folder.index}
+              </div>
+              <div className="absolute left-3 top-6 rotate-90 origin-left font-mono text-xs uppercase tracking-[0.2em] text-slate-500/80 whitespace-nowrap">
+                {title} / Works
+              </div>
+            </div>
+          </aside>
+
+          <div
+            className="relative mt-20 xl:mt-0 min-h-[calc(100svh-6rem)] bg-[#d8d8d6] text-[#171717] shadow-[0_-18px_40px_rgba(0,0,0,0.12)]"
+            style={{ clipPath: 'polygon(0 0, 31% 0, 34% 3.25rem, 100% 3.25rem, 100% 100%, 0 100%)' }}
+          >
+            <header className="px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6">
+              <p className="font-mono text-sm mb-6">{folder.index}</p>
+              <h2 className="font-serif text-[18vw] md:text-[8vw] lg:text-[6vw] leading-[0.82] tracking-[-0.06em]">
+                {title}
+              </h2>
+            </header>
+
+            {activePhotoCollection ? (
+              <div className="grid grid-cols-1 gap-4 md:gap-5 px-5 md:px-8 pb-6 md:pb-8">
+                <div className="grid grid-cols-[minmax(8.5rem,0.82fr)_minmax(0,1.35fr)] sm:grid-cols-[minmax(13rem,0.82fr)_minmax(0,1.35fr)] gap-4 md:gap-8 border-y border-dotted border-black/55 py-4 md:py-5">
+                  <div>
+                  <p className="font-mono text-[0.66rem] md:text-sm uppercase tracking-[0.14em] text-black/55 mb-3 md:mb-5">
+                    {activePhotoCollection.folderName} / {activePhotoCollection.imageCount} images
+                  </p>
+                  <h3 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.9] tracking-[-0.05em]">
+                    {previewTitle}
+                  </h3>
+                  </div>
+
+                  <div className="pt-5 sm:pt-7 md:pt-8">
+                  <p className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-black/70">
+                    {previewDescription}
+                  </p>
+                  <div className="mt-4 md:mt-5 flex flex-wrap gap-2">
+                    {activePhotoCollection.tags.map((tag) => (
+                      <span key={tag} className="rounded-full border border-black/20 px-3 py-1 font-mono text-[0.68rem] uppercase tracking-[0.12em] text-black/60">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 md:mt-6 font-mono text-[0.64rem] md:text-xs uppercase tracking-[0.12em] text-black/45">
+                    {language === 'zh'
+                      ? '按住照片左右拖动并松开即可翻页；点击当前照片可放大查看。'
+                      : 'Hold and drag left or right to flip. Click the current image to enlarge.'}
+                  </p>
+                  </div>
+                </div>
+
+                <div className="flex min-h-0 items-center justify-center overflow-visible py-2 md:py-3">
+                  <PhotoStackViewer images={activePhotoCollection.images} title={previewTitle} />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_34vw] px-5 md:px-8 py-4 border-y border-dotted border-black/55 font-mono text-xs md:text-sm uppercase tracking-[0.08em]">
+                  <span>{language === 'zh' ? '摄影项目' : 'Photography Projects'}</span>
+                  <span className="hidden md:block">{language === 'zh' ? '预览' : 'Preview'}</span>
+                </div>
+
+                <div>
+                  {LOCAL_PHOTOGRAPHY_COLLECTIONS.map((project, index) => {
+                    const projectTitle = project.title[language];
+                    const projectDescription = project.description[language];
+                    const coverImage = project.images[0];
+
+                    return (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          setActivePhotoCollection({
+                            ...project,
+                            images: shuffleImages(project.images),
+                          });
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_32vw] md:hover:grid-cols-[minmax(0,0.82fr)_42vw] gap-4 md:gap-8 px-5 md:px-8 py-5 md:py-6 min-h-[8.5rem] md:min-h-[10rem] hover:min-h-[18rem] border-b border-dotted border-black/55 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
+                      >
+                        <div className="flex flex-col justify-between gap-8 min-w-0">
+                          <h3 className="font-serif text-2xl md:text-3xl lg:text-4xl leading-tight tracking-[-0.04em]">
+                            {String(index + 1).padStart(2, '0')} / {projectTitle}
+                          </h3>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[10rem_minmax(0,1fr)] gap-4 font-mono text-xs md:text-sm uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-40 transition-all duration-500">
+                            <span>{project.imageCount} images</span>
+                            <span className="leading-relaxed">{project.tags.join(' / ')}</span>
+                            <p className="sm:col-span-2 normal-case tracking-normal text-sm md:text-base line-clamp-2 opacity-70">
+                              {projectDescription}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="relative h-28 md:h-full min-h-[7rem] overflow-hidden bg-black">
+                          <img
+                            src={coverImage}
+                            alt={projectTitle}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (localCollection) {
+    return (
+      <section className="relative w-full -mt-6 md:-mt-10 min-h-[calc(100svh-6rem)] bg-white dark:bg-black text-black dark:text-white animate-fade-in">
+        <button
+          onClick={onBack}
+          className="absolute left-5 md:left-8 top-6 md:top-8 z-20 font-mono text-xs md:text-sm uppercase tracking-[0.14em] hover:translate-x-[-4px] transition-transform"
+        >
+          ← {language === 'zh' ? '返回所有作品' : 'See All Works'}
+        </button>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[24vw_minmax(0,1fr)] min-h-[calc(100svh-6rem)]">
+          <aside className="relative hidden xl:block">
+            <div className="absolute left-1/2 top-[24%] h-[27rem] w-[8rem] -translate-x-1/2 rotate-[-18deg] rounded-[1.6rem] border border-black/10 bg-gradient-to-b from-white/95 to-slate-200/30 shadow-2xl opacity-80">
+              <div className="absolute left-1/2 top-[-2.4rem] h-20 w-20 -translate-x-1/2 rounded-full border-[10px] border-slate-300/60 bg-white/60" />
+              <div className="absolute inset-4 rounded-[1rem] border border-white/80 bg-white/20" />
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rotate-90 font-serif text-6xl tracking-[-0.08em] text-slate-500/70">
+                {folder.index}
+              </div>
+              <div className="absolute left-3 top-6 rotate-90 origin-left font-mono text-xs uppercase tracking-[0.2em] text-slate-500/80 whitespace-nowrap">
+                {title} / Works
+              </div>
+            </div>
+          </aside>
+
+          <div
+            className="relative mt-20 xl:mt-0 min-h-[calc(100svh-6rem)] bg-[#d8d8d6] text-[#171717] shadow-[0_-18px_40px_rgba(0,0,0,0.12)]"
+            style={{ clipPath: 'polygon(0 0, 31% 0, 34% 3.25rem, 100% 3.25rem, 100% 100%, 0 100%)' }}
+          >
+            <header className="px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6">
+              <p className="font-mono text-sm mb-6">{folder.index}</p>
+              <h2 className="font-serif text-[18vw] md:text-[8vw] lg:text-[6vw] leading-[0.82] tracking-[-0.06em]">
+                {title}
+              </h2>
+            </header>
+
+            <div className="grid grid-cols-1 2xl:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)] gap-8 md:gap-12 px-5 md:px-8 pb-10 md:pb-14">
+              <div className="border-y border-dotted border-black/55 py-5 md:py-7">
+                <p className="font-mono text-xs md:text-sm uppercase tracking-[0.14em] text-black/55 mb-6">
+                  {localCollection.folderName} / {localCollection.imageCount} images
+                </p>
+                <h3 className="font-serif text-5xl md:text-7xl leading-[0.9] tracking-[-0.05em] mb-6">
+                  {localTitle}
+                </h3>
+                <p className="max-w-xl text-base md:text-lg leading-relaxed text-black/70">
+                  {localDescription}
+                </p>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {localCollection.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-black/20 px-3 py-1 font-mono text-[0.68rem] uppercase tracking-[0.12em] text-black/60"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-10 font-mono text-xs uppercase tracking-[0.12em] text-black/45">
+                  {language === 'zh'
+                    ? '点击右侧照片、滚轮或拖动可翻页。上一张会停在左侧。'
+                    : 'Click, wheel, drag, or use arrow keys. Viewed images stay on the left.'}
+                </p>
+              </div>
+
+              <div className="flex min-h-[32rem] items-center justify-center overflow-visible py-4 md:py-8">
+                <PhotoStackViewer images={localCollection.images} title={localTitle} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative w-full -mt-6 md:-mt-10 min-h-[calc(100svh-6rem)] bg-white dark:bg-black text-black dark:text-white animate-fade-in">
@@ -526,6 +1066,12 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
       setFilter(Category.PHOTO);
     }
   }, [archiveLayout, filter]);
+
+  useEffect(() => {
+    if (archiveLayout && activeArchiveCategory) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [archiveLayout, activeArchiveCategory]);
 
   // Get Categories in preferred order
   const currentProjects = PROJECTS[language];
