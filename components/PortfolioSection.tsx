@@ -7,6 +7,9 @@ import { PHOTOGRAPHY_GALLERY } from '../src/data/photography';
 import { LOCAL_PHOTOGRAPHY_COLLECTIONS, LocalPortfolioCollection } from '../src/data/localPortfolio';
 import { ArrowUpRight, X, Github, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 
+const BBQ_CATEGORY = 'bbq';
+const PHOTO_COLLECTION_CATEGORY = 'photo-collection';
+
 interface PortfolioSectionProps {
   language: Language;
   externalFilter?: string; // Controlled by parent if needed
@@ -77,9 +80,11 @@ const ARCHIVE_CATEGORIES = [
 
 const ARCHIVE_FOLDERS = [
   { id: Category.PHOTO, index: '01', zh: '静态摄影', en: 'Photography', color: '#ffe629' },
-  { id: Category.VIDEO, index: '02', zh: '动态影像', en: 'Videography', color: '#d8d8d6' },
-  { id: Category.DESIGN, index: '03', zh: '平面交互', en: 'Graphic & UI', color: '#eeeeec' },
-  { id: Category.ENVIRONMENT, index: '04', zh: '环境 / 室内设计', en: 'Environment / Interior', color: '#b7b7b5' },
+  { id: PHOTO_COLLECTION_CATEGORY, index: '02', zh: '摄影集', en: 'Photo Collection', color: '#f2f2f0' },
+  { id: Category.VIDEO, index: '03', zh: '动态影像', en: 'Videography', color: '#d8d8d6' },
+  { id: Category.DESIGN, index: '04', zh: '平面交互', en: 'Graphic & UI', color: '#eeeeec' },
+  { id: Category.ENVIRONMENT, index: '05', zh: '环境 / 室内设计', en: 'Environment / Interior', color: '#b7b7b5' },
+  { id: BBQ_CATEGORY, index: '06', zh: '东北地摊烧烤', en: 'Northeast BBQ', color: '#ff6b2c' },
 ];
 
 const ARCHIVE_CARD_LAYOUT: Record<string, { left: string; width: string; bottom: string; zIndex: number; delay: string }> = {
@@ -94,6 +99,7 @@ const ArchiveCategoryTabs = ({
   filter,
   setFilter,
   onOpenCategory,
+  onLockedCategory,
   hoveredArchive,
   setHoveredArchive,
 }: {
@@ -101,6 +107,7 @@ const ArchiveCategoryTabs = ({
   filter: string;
   setFilter: (category: string) => void;
   onOpenCategory: (category: string) => void;
+  onLockedCategory: () => void;
   hoveredArchive: string | null;
   setHoveredArchive: React.Dispatch<React.SetStateAction<string | null>>;
 }) => (
@@ -115,29 +122,35 @@ const ArchiveCategoryTabs = ({
       </span>
     </div>
 
-    <div className="archive-folder-stage absolute inset-x-0 bottom-0 hidden lg:block h-[clamp(21rem,40svh,28rem)]">
+    <div className="archive-folder-stage absolute inset-x-0 bottom-0 hidden lg:block h-[clamp(28rem,56svh,38rem)]">
       {ARCHIVE_FOLDERS.map((cat, index) => {
         const label = language === 'zh' ? cat.zh : cat.en;
         const isHovered = hoveredArchive === cat.id;
         const isDimmed = hoveredArchive !== null && hoveredArchive !== cat.id;
         const layout = {
-          [Category.PHOTO]: { left: '0%', width: '50%', top: '0%', bottom: 'auto', height: '50%', zIndex: 20, delay: '160ms' },
-          [Category.VIDEO]: { left: '50%', width: '50%', top: '0%', bottom: 'auto', height: '50%', zIndex: 20, delay: '220ms' },
-          [Category.DESIGN]: { left: '0%', width: '52%', top: 'calc(50% - 2.55rem)', bottom: 'auto', height: 'calc(50% + 2.55rem)', zIndex: 34, delay: '40ms' },
-          [Category.ENVIRONMENT]: { left: '38%', width: '62%', top: 'calc(50% - 2.55rem)', bottom: 'auto', height: 'calc(50% + 2.55rem)', zIndex: 36, delay: '90ms' },
+          [Category.PHOTO]: { left: '0%', width: '50%', top: '0%', bottom: 'auto', height: '44%', zIndex: 41, delay: '260ms' },
+          [PHOTO_COLLECTION_CATEGORY]: { left: '50%', width: '50%', top: '0%', bottom: 'auto', height: '44%', zIndex: 42, delay: '300ms' },
+          [Category.VIDEO]: { left: '0%', width: '50%', top: '27.5%', bottom: 'auto', height: '44%', zIndex: 51, delay: '180ms' },
+          [Category.DESIGN]: { left: '50%', width: '50%', top: '27.5%', bottom: 'auto', height: '44%', zIndex: 52, delay: '220ms' },
+          [Category.ENVIRONMENT]: { left: '0%', width: '50%', top: '55%', bottom: 'auto', height: '45%', zIndex: 61, delay: '80ms' },
+          [BBQ_CATEGORY]: { left: '50%', width: '50%', top: '55%', bottom: 'auto', height: '45%', zIndex: 62, delay: '120ms' },
         }[cat.id];
 
         return (
           <button
             key={cat.id}
             onClick={() => {
+              if (cat.id === BBQ_CATEGORY) {
+                onLockedCategory();
+                return;
+              }
               setFilter(cat.id);
               onOpenCategory(cat.id);
             }}
             onMouseEnter={() => setHoveredArchive(cat.id)}
             onFocus={() => setHoveredArchive(cat.id)}
             onBlur={() => setHoveredArchive(null)}
-            className="archive-folder-card group absolute overflow-visible text-left px-[clamp(1.5rem,2.4vw,3rem)] pt-[clamp(1.05rem,1.6vw,1.6rem)] pb-6 transition-[transform,background-color,color,filter] duration-300 ease-out will-change-transform"
+            className="archive-folder-card group absolute block overflow-visible text-left px-[clamp(1.5rem,2.4vw,3rem)] pt-[clamp(0.2rem,0.55vw,0.55rem)] pb-6 transition-[transform,background-color,color,filter] duration-300 ease-out will-change-transform"
             style={{
               left: layout.left,
               width: layout.width,
@@ -149,12 +162,12 @@ const ArchiveCategoryTabs = ({
               color: isDimmed ? 'rgba(24, 24, 24, 0.16)' : '#181818',
               filter: isDimmed ? 'grayscale(1) saturate(0) brightness(1.05)' : 'none',
               transform: isHovered ? 'translate3d(0, -0.35rem, 0)' : 'translate3d(0, 0, 0)',
-              clipPath: 'polygon(0 0, 47% 0, calc(47% + 2.35rem) 2.35rem, 100% 2.35rem, 100% 100%, 0 100%)',
+              clipPath: 'polygon(0 0, 47% 0, calc(47% + 2.15rem) 2.15rem, 100% 2.15rem, 100% 100%, 0 100%)',
               animation: `archiveFolderRise 620ms cubic-bezier(0.16, 1, 0.3, 1) ${layout.delay} both`,
             }}
           >
-            <span className="archive-folder-index block font-mono mb-3">{cat.index}</span>
-            <span className="block max-w-[95%] font-serif text-[clamp(2.85rem,4.75vw,5.95rem)] leading-[0.95] tracking-[-0.06em] break-keep">
+            <span className="archive-folder-index relative -top-5 block font-mono mb-2">{cat.index}</span>
+            <span className="relative -top-5 block max-w-[95%] font-serif text-[clamp(2rem,3.25vw,4.45rem)] leading-[0.92] tracking-[-0.045em] break-keep">
               {label}
             </span>
           </button>
@@ -169,15 +182,21 @@ const ArchiveCategoryTabs = ({
         const isDimmed = hoveredArchive !== null && hoveredArchive !== cat.id;
         const riseDelay = {
           [Category.PHOTO]: '300ms',
+          [PHOTO_COLLECTION_CATEGORY]: '260ms',
           [Category.VIDEO]: '220ms',
           [Category.DESIGN]: '140ms',
-          [Category.ENVIRONMENT]: '60ms',
+          [Category.ENVIRONMENT]: '80ms',
+          [BBQ_CATEGORY]: '20ms',
         }[cat.id];
 
         return (
           <button
             key={cat.id}
             onClick={() => {
+              if (cat.id === BBQ_CATEGORY) {
+                onLockedCategory();
+                return;
+              }
               setFilter(cat.id);
               onOpenCategory(cat.id);
             }}
@@ -275,6 +294,14 @@ const ArchiveCategoryTabs = ({
 
       .archive-folder-card--responsive:nth-child(4) {
         --folder-tab-start: 54%;
+      }
+
+      .archive-folder-card--responsive:nth-child(5) {
+        --folder-tab-start: 46%;
+      }
+
+      .archive-folder-card--responsive:nth-child(6) {
+        --folder-tab-start: 58%;
       }
 
       .archive-folder-title {
@@ -770,7 +797,7 @@ const CategoryArchiveDetail = ({
           >
             <header className="px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6">
               <p className="font-mono text-sm mb-6">{folder.index}</p>
-              <h2 className="font-serif text-[18vw] md:text-[8vw] lg:text-[6vw] leading-[0.82] tracking-[-0.06em]">
+              <h2 className="font-serif text-[clamp(3rem,12vw,5.25rem)] md:text-[8vw] lg:text-[6vw] leading-[0.88] md:leading-[0.82] tracking-[-0.04em] md:tracking-[-0.06em] break-words">
                 {title}
               </h2>
             </header>
@@ -900,7 +927,7 @@ const CategoryArchiveDetail = ({
           >
             <header className="px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6">
               <p className="font-mono text-sm mb-6">{folder.index}</p>
-              <h2 className="font-serif text-[18vw] md:text-[8vw] lg:text-[6vw] leading-[0.82] tracking-[-0.06em]">
+              <h2 className="font-serif text-[clamp(3rem,12vw,5.25rem)] md:text-[8vw] lg:text-[6vw] leading-[0.88] md:leading-[0.82] tracking-[-0.04em] md:tracking-[-0.06em] break-words">
                 {title}
               </h2>
             </header>
@@ -972,7 +999,7 @@ const CategoryArchiveDetail = ({
         >
           <header className="px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6">
             <p className="font-mono text-sm mb-6">{folder.index}</p>
-            <h2 className="font-serif text-[18vw] md:text-[8vw] lg:text-[6vw] leading-[0.82] tracking-[-0.06em]">
+            <h2 className="font-serif text-[clamp(3rem,12vw,5.25rem)] md:text-[8vw] lg:text-[6vw] leading-[0.88] md:leading-[0.82] tracking-[-0.04em] md:tracking-[-0.06em] break-words">
               {title}
             </h2>
           </header>
@@ -1042,6 +1069,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
   const [selectedProject, setSelectedProject] = useState<ProjectDisplay | null>(null);
   const [displayProject, setDisplayProject] = useState<ProjectDisplay | null>(null);
   const [isModalRendered, setIsModalRendered] = useState(false);
+  const [showArchiveToast, setShowArchiveToast] = useState(false);
   
   // Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -1051,6 +1079,12 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
   // Sync with external filter if provided
   useEffect(() => {
     if (externalFilter) {
+      if (archiveLayout && externalFilter === BBQ_CATEGORY) {
+        setFilter(Category.PHOTO);
+        setActiveArchiveCategory(null);
+        return;
+      }
+
       setFilter(archiveLayout && externalFilter === 'All' ? Category.PHOTO : externalFilter);
       if (archiveLayout && externalFilter === 'All') {
         setActiveArchiveCategory(null);
@@ -1068,6 +1102,15 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
   }, [archiveLayout, filter]);
 
   useEffect(() => {
+    if (archiveLayout && activeArchiveCategory === BBQ_CATEGORY) {
+      setActiveArchiveCategory(null);
+      setFilter(Category.PHOTO);
+      setShowArchiveToast(true);
+      window.setTimeout(() => setShowArchiveToast(false), 2000);
+    }
+  }, [archiveLayout, activeArchiveCategory]);
+
+  useEffect(() => {
     if (archiveLayout && activeArchiveCategory) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1081,13 +1124,37 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
     Category.DESIGN,
     Category.ENVIRONMENT
   ];
+  const archiveOrder = [
+    Category.PHOTO,
+    PHOTO_COLLECTION_CATEGORY,
+    Category.VIDEO,
+    Category.DESIGN,
+    Category.ENVIRONMENT,
+    BBQ_CATEGORY
+  ];
   
   // Keep every discipline visible even when its project list is still empty.
-  const categories = archiveLayout ? preferredOrder : ['All', ...preferredOrder];
+  const categories = archiveLayout ? archiveOrder : ['All', ...preferredOrder];
 
   const filteredProjects = filter === 'All'
     ? currentProjects 
     : currentProjects.filter(p => p.category === filter);
+
+  const handleLockedArchiveCategory = () => {
+    setActiveArchiveCategory(null);
+    setFilter(archiveLayout ? Category.PHOTO : 'All');
+    setShowArchiveToast(true);
+    window.setTimeout(() => setShowArchiveToast(false), 2000);
+  };
+
+  const handleOpenArchiveCategory = (category: string) => {
+    if (category === BBQ_CATEGORY) {
+      handleLockedArchiveCategory();
+      return;
+    }
+
+    setActiveArchiveCategory(category);
+  };
 
   // Handle Modal Render State for Animation
   useEffect(() => {
@@ -1157,7 +1224,9 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
     if (isRightSwipe) handlePrev();
   };
 
-  if (archiveLayout && activeArchiveCategory) {
+  const canRenderArchiveDetail = archiveLayout && activeArchiveCategory && activeArchiveCategory !== BBQ_CATEGORY;
+
+  if (canRenderArchiveDetail) {
     return (
       <div className="relative left-1/2 w-screen -translate-x-1/2 pb-20">
         <CategoryArchiveDetail
@@ -1196,10 +1265,17 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
           language={language}
           filter={filter}
           setFilter={setFilter}
-          onOpenCategory={setActiveArchiveCategory}
+          onOpenCategory={handleOpenArchiveCategory}
+          onLockedCategory={handleLockedArchiveCategory}
           hoveredArchive={hoveredArchive}
           setHoveredArchive={setHoveredArchive}
         />
+        {showArchiveToast && createPortal(
+          <div className="fixed bottom-10 left-1/2 z-[100] -translate-x-1/2 rounded-full bg-black px-8 py-4 text-xl font-bold text-white shadow-2xl animate-fade-in dark:bg-white dark:text-black">
+            {language === 'zh' ? '公司团建可解锁此操作' : 'Available for company team-building events'}
+          </div>,
+          document.body
+        )}
       </div>
     );
   }
@@ -1213,7 +1289,8 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
           language={language}
           filter={filter}
           setFilter={setFilter}
-          onOpenCategory={setActiveArchiveCategory}
+          onOpenCategory={handleOpenArchiveCategory}
+          onLockedCategory={handleLockedArchiveCategory}
           hoveredArchive={hoveredArchive}
           setHoveredArchive={setHoveredArchive}
         />

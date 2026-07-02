@@ -29,7 +29,6 @@ const folderImages = {
   video: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80',
   graphic: 'https://www.figma.com/file/hslZfU850zu8tJ6P1Y6fbC/thumbnail',
   interior: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1800&q=80',
-  bbq: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1800&q=80',
 };
 
 const zhFolders: ArchiveFolder[] = [
@@ -39,7 +38,7 @@ const zhFolders: ArchiveFolder[] = [
     title: '摄影',
     year: '2021—2026',
     type: '静态影像作品',
-    description: '以旅行、城市、人物和日常观察为线索，整理持续积累的静态影像档案。',
+    description: '从高中时期就对摄影有一些兴趣，在大学的时候也学习了专业的摄影相关知识，这里展示了我通过摄影对生活的观察，对美的思考，记录了生活里的点滴...',
     tags: ['纪实摄影', '旅行影像', '视觉观察', '个人档案'],
     category: Category.PHOTO,
     color: '#f2f2f0',
@@ -49,10 +48,10 @@ const zhFolders: ArchiveFolder[] = [
   {
     id: 'video',
     index: '02',
-    title: '摄像',
+    title: '动态影像',
     year: '2022—2026',
     type: '动态影像作品',
-    description: '围绕短片、剪辑、运动镜头和叙事节奏建立的动态影像作品索引。',
+    description: '平时的课时作业、专科毕业设计、氛围感实验片段以及在洛阳江湖影视后期中制作的短剧剧集。',
     tags: ['短片', '剪辑', '运动镜头', '叙事影像'],
     category: Category.VIDEO,
     color: '#ffe629',
@@ -85,19 +84,6 @@ const zhFolders: ArchiveFolder[] = [
     textColor: '#f6f2e8',
     image: folderImages.interior,
   },
-  {
-    id: 'bbq',
-    index: '05',
-    title: '东北地摊烧烤',
-    year: '隐藏技能',
-    type: '公司团建限定项目',
-    description: '非正式作品栏目。点击后提示解锁条件，保留作为个人站的小彩蛋。',
-    tags: ['炭火', '蘸料', '氛围组', '可解锁'],
-    category: null,
-    color: '#ff6b2c',
-    textColor: '#171717',
-    image: folderImages.bbq,
-  },
 ];
 
 const enFolders: ArchiveFolder[] = zhFolders.map((folder) => {
@@ -126,21 +112,12 @@ const enFolders: ArchiveFolder[] = zhFolders.map((folder) => {
       description: 'Environmental design works organized around spatial concepts, interiors, materials, and models.',
       tags: ['Space', 'Interior', 'Environment', 'Model'],
     },
-    bbq: {
-      title: 'Northeast BBQ',
-      year: 'Hidden Skill',
-      type: 'Company Team-building Only',
-      description: 'A small personal easter egg. Click to reveal the unlock condition.',
-      tags: ['Charcoal', 'Sauce', 'Vibe', 'Unlockable'],
-    },
   };
 
   return { ...folder, ...overrides[folder.id] };
 });
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-let heroWheelGate: { direction: 1 | -1; index: number; time: number } | null = null;
-let heroWheelCooldown = 0;
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategorySelect, language }) => {
   const content = HOME_DATA[language];
@@ -187,83 +164,50 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
       if (folders.length === 0) return;
       const dockTop = Number.parseFloat(window.getComputedStyle(folders[0]).top || '0');
       const rootTop = root.getBoundingClientRect().top + window.scrollY;
-      const getFolderSnapTop = (folder: HTMLElement) => rootTop + folder.offsetTop - dockTop;
+      const folderStep = Math.max(folders[0].getBoundingClientRect().height, window.innerHeight - dockTop);
+      const firstFolderSnapTop = rootTop + window.innerHeight - dockTop;
       const direction: 1 | -1 = event.deltaY > 0 ? 1 : -1;
-      const snapTops = folders.map(getFolderSnapTop);
+      const snapTops = folders.map((_, index) => firstFolderSnapTop + index * folderStep);
       const currentY = window.scrollY;
-      const closestIndex = snapTops.reduce((bestIndex, snapTop, index) => {
-        return Math.abs(snapTop - currentY) < Math.abs(snapTops[bestIndex] - currentY) ? index : bestIndex;
-      }, 0);
-      const closestDistance = Math.abs(snapTops[closestIndex] - currentY);
-      const isInStackRange = currentY >= snapTops[0] - window.innerHeight * 0.22
-        && currentY <= snapTops[snapTops.length - 1] + window.innerHeight * 0.7;
+      const stackStart = snapTops[0];
+      const stackEnd = snapTops[snapTops.length - 1];
+      const isInStackRange = currentY >= stackStart - window.innerHeight * 0.22
+        && currentY <= stackEnd + window.innerHeight * 0.18;
 
       if (!isInStackRange) return;
 
-      const now = window.performance.now();
-      if (now < heroWheelCooldown) {
-        event.preventDefault();
+      if (direction > 0 && currentY >= stackEnd - 2) {
         return;
       }
 
-      const pendingGate = heroWheelGate;
-      const isPendingSecondWheel = pendingGate && pendingGate.direction === direction && now - pendingGate.time < 1800;
-      if (isPendingSecondWheel) {
-        const targetIndex = pendingGate.index + direction;
-        if (targetIndex >= 0 && targetIndex < snapTops.length) {
-          event.preventDefault();
-          heroWheelGate = null;
-          heroWheelCooldown = now + 520;
-          window.setTimeout(() => {
-            window.scrollTo({
-              top: snapTops[targetIndex],
-              behavior: 'smooth',
-            });
-          }, 80);
-          return;
-        }
-      }
-
-      if (closestDistance > 4) {
-        event.preventDefault();
-        heroWheelGate = null;
-        heroWheelCooldown = now + 380;
-        window.setTimeout(() => {
-          window.scrollTo({
-            top: snapTops[closestIndex],
-            behavior: 'smooth',
-          });
-        }, 80);
+      if (direction < 0 && currentY <= stackStart + 2) {
         return;
       }
 
-      const settledIndex = closestIndex;
-      const hasNextFolder = direction > 0
-        ? settledIndex < folders.length - 1
-        : settledIndex > 0;
-      if (!hasNextFolder) {
-        heroWheelGate = null;
-        return;
-      }
+      const maxWheelStep = Math.min(folderStep * 0.38, 240);
+      const shouldLimitDelta = Math.abs(event.deltaY) > maxWheelStep;
+      const limitedDelta = clamp(event.deltaY, -maxWheelStep, maxWheelStep);
+      const boundary = direction > 0
+        ? snapTops.find((snapTop) => snapTop > currentY + 2)
+        : [...snapTops].reverse().find((snapTop) => snapTop < currentY - 2);
+      const naturalTargetY = currentY + event.deltaY;
+      const limitedTargetY = currentY + limitedDelta;
+      const wouldCrossBoundary = boundary !== undefined
+        && (direction > 0 ? naturalTargetY >= boundary : naturalTargetY <= boundary);
 
-      const gate = heroWheelGate;
-      const isSecondWheel = gate && gate.direction === direction && gate.index === settledIndex && now - gate.time < 1800;
+      if (!shouldLimitDelta && !wouldCrossBoundary) return;
 
-      if (!isSecondWheel) {
-        event.preventDefault();
-        heroWheelGate = { direction, index: settledIndex, time: now };
-        return;
-      }
+      const clampedTargetY = boundary === undefined
+        ? limitedTargetY
+        : direction > 0
+          ? Math.min(limitedTargetY, boundary)
+          : Math.max(limitedTargetY, boundary);
 
-      heroWheelGate = null;
-      heroWheelCooldown = now + 520;
       event.preventDefault();
-      window.setTimeout(() => {
-        window.scrollTo({
-          top: snapTops[settledIndex + direction],
-          behavior: 'smooth',
-        });
-      }, 80);
+      window.scrollTo({
+        top: clampedTargetY,
+        behavior: 'auto',
+      });
     };
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
@@ -363,9 +307,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(13rem,0.26fr)_minmax(0,1fr)] xl:grid-cols-[minmax(14rem,0.25fr)_minmax(0,0.57fr)_minmax(14rem,0.22fr)] gap-5 md:gap-8 px-5 md:px-10 lg:px-[4vw] py-6 md:py-8 flex-1 min-h-0">
-                    <div className="font-mono text-xs md:text-sm uppercase leading-loose lg:max-w-[34ch] overflow-hidden">
-                      <p>{folder.description}</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(18rem,0.34fr)_minmax(0,1fr)] xl:grid-cols-[minmax(20rem,0.32fr)_minmax(0,0.52fr)_minmax(14rem,0.2fr)] gap-5 md:gap-8 px-5 md:px-10 lg:px-[4vw] py-6 md:py-8 flex-1 min-h-0">
+                    <div className="font-mono text-xs md:text-sm uppercase lg:max-w-[52ch] overflow-hidden">
+                      <p className="leading-[2.05] md:leading-[2.15] [text-indent:2em]">
+                        {folder.description}
+                      </p>
                       <button
                         onClick={() => handleFolderClick(folder.category)}
                         className="mt-7 md:mt-8 text-base hover:underline underline-offset-4"
