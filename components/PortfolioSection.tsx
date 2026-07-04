@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { PROJECTS, CATEGORY_LABELS } from '../constants';
 import { Category, Language, ProjectDisplay } from '../types';
 import { PHOTOGRAPHY_GALLERY } from '../src/data/photography';
-import { LOCAL_PHOTOGRAPHY_COLLECTIONS, LocalPortfolioCollection } from '../src/data/localPortfolio';
+import { LOCAL_ENVIRONMENT_COLLECTIONS, LOCAL_PHOTOGRAPHY_COLLECTIONS, LocalPortfolioCollection } from '../src/data/localPortfolio';
 import { ArrowUpRight, X, Github, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const BBQ_CATEGORY = 'bbq';
@@ -423,6 +423,70 @@ const shuffleImages = (images: string[]) => {
   return next;
 };
 
+const SingleImagePreview = ({
+  image,
+  title,
+  presentation = 'framed',
+}: {
+  image: string;
+  title: string;
+  presentation?: 'framed' | 'flush';
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isFlush = presentation === 'flush';
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsExpanded(true)}
+        className={isFlush
+          ? 'w-full max-w-none cursor-zoom-in border border-white/80 bg-transparent p-px shadow-none'
+          : 'w-full max-w-[min(86vw,62rem)] cursor-zoom-in rounded-[1.35rem] border border-white/90 bg-[#f8f7f2] p-2 shadow-[0_2.2rem_5rem_rgba(0,0,0,0.22)]'}
+        aria-label={`Open ${title}`}
+      >
+        <img
+          src={image}
+          alt={title}
+          loading="eager"
+          decoding="async"
+          draggable={false}
+          className={isFlush
+            ? 'block h-auto w-full object-contain'
+            : 'block max-h-[58svh] w-full rounded-[1rem] object-contain'}
+        />
+      </button>
+
+      {isExpanded && createPortal(
+        <div
+          className="fixed inset-0 z-[240] flex cursor-zoom-out items-center justify-center bg-black p-[clamp(1rem,4vw,4rem)]"
+          onClick={() => setIsExpanded(false)}
+        >
+          <button
+            type="button"
+            className="fixed right-5 top-5 grid h-12 w-12 place-items-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsExpanded(false);
+            }}
+            aria-label="Close enlarged image"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={image}
+            alt={title}
+            draggable={false}
+            className="max-h-full max-w-full rounded-[0.8rem] object-contain shadow-[0_2rem_7rem_rgba(0,0,0,0.5)]"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
+
 const PhotoStackViewer = ({
   images,
   title,
@@ -566,12 +630,15 @@ const PhotoStackViewer = ({
         </button>
       </div>
 
-      {expandedIndex !== null && (
+      {expandedIndex !== null && createPortal(
         <div className="photo-stack-lightbox" onClick={() => setExpandedIndex(null)}>
           <button
             type="button"
             className="photo-stack-lightbox-close"
-            onClick={() => setExpandedIndex(null)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpandedIndex(null);
+            }}
             aria-label="Close enlarged image"
           >
             <X size={28} />
@@ -580,8 +647,10 @@ const PhotoStackViewer = ({
             src={images[expandedIndex]}
             alt={`${title} ${expandedIndex + 1}`}
             draggable={false}
+            onClick={(event) => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`
@@ -688,7 +757,7 @@ const PhotoStackViewer = ({
         .photo-stack-lightbox {
           position: fixed;
           inset: 0;
-          z-index: 180;
+          z-index: 240;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -734,6 +803,348 @@ const PhotoStackViewer = ({
   );
 };
 
+const FilmNegativePreview = ({
+  images,
+  title,
+}: {
+  images: string[];
+  title: string;
+}) => {
+  const frames = images.slice(0, 18);
+  const strips = [frames.slice(0, 9), frames.slice(9, 18)].filter((strip) => strip.length > 0);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const [shouldLoadFrames, setShouldLoadFrames] = useState(false);
+
+  useEffect(() => {
+    const element = previewRef.current;
+    if (!element || shouldLoadFrames) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoadFrames(true);
+        observer.disconnect();
+      },
+      { threshold: 0.18 }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [shouldLoadFrames]);
+
+  return (
+    <div ref={previewRef} className={`film-negative-preview ${shouldLoadFrames ? 'is-loaded' : ''}`} aria-label={`${title} film preview`}>
+      {strips.map((strip, stripIndex) => (
+        <div
+          className="film-negative-strip"
+          key={`${title}-${stripIndex}`}
+          style={{ animationDelay: `${stripIndex * 120}ms` }}
+        >
+          <div className="film-negative-leader">
+            <img src="/works/local/film/film-leader-solid.png" alt="" draggable={false} />
+          </div>
+          <div className="film-negative-frames">
+            {shouldLoadFrames
+              ? strip.map((image, index) => (
+                <div
+                  className="film-negative-frame"
+                  key={image}
+                >
+                  <img
+                    src={image}
+                    alt={`${title} preview ${stripIndex * 4 + index + 1}`}
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                  />
+                </div>
+              ))
+              : strip.map((_, index) => (
+                <div
+                  className="film-negative-frame is-empty"
+                  key={`${title}-${stripIndex}-${index}-empty`}
+                  style={{ animationDelay: `${index * 90}ms` }}
+                />
+              ))}
+          </div>
+        </div>
+      ))}
+
+      <style>{`
+        .film-negative-preview {
+          display: grid;
+          gap: 0.45rem;
+          width: max(34rem, calc(100vw - 2rem));
+          min-height: 8rem;
+          padding: 0.42rem 0 0.42rem 0.42rem;
+          background: transparent;
+          border: 0;
+          border-right: 0;
+        }
+
+        .film-negative-strip {
+          --film-strip-height: clamp(4.64rem, 6.7vw, 6.75rem);
+          --film-hole-w: 0.34rem;
+          --film-hole-gap: 0.42rem;
+          --film-hole-h: 0.3rem;
+          --film-hole-offset-y: 0.22rem;
+          position: relative;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          gap: 0;
+          overflow: visible;
+          background: transparent;
+          padding: 0;
+          padding-right: 0;
+          transform: translateX(34%);
+          opacity: 0;
+        }
+
+        .film-negative-preview.is-loaded .film-negative-strip {
+          animation: film-strip-enter 1120ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .film-negative-strip::selection {
+          background: transparent;
+        }
+
+        .film-negative-strip > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .film-negative-preview::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255,255,255,0.22) 46%,
+            rgba(255,255,255,0.42) 50%,
+            rgba(255,255,255,0.18) 54%,
+            transparent 100%
+          );
+          transform: translateX(-120%);
+          animation: film-loading-scan 1.45s cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
+          mix-blend-mode: screen;
+        }
+
+        .film-negative-preview.is-loaded::after {
+          animation-duration: 2.25s;
+        }
+
+        .film-negative-preview {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .film-negative-leader {
+          width: calc(var(--film-strip-height) * 1.187);
+          height: var(--film-strip-height);
+          aspect-ratio: 426 / 359;
+          align-self: start;
+          margin: 0 -0.12rem 0 0;
+          overflow: visible;
+          z-index: 3;
+        }
+
+        .film-negative-leader::before,
+        .film-negative-leader::after {
+          content: "";
+          position: absolute;
+          height: var(--film-hole-h);
+          background: repeating-linear-gradient(
+            90deg,
+            rgba(255,255,255,0.94) 0 var(--film-hole-w),
+            transparent var(--film-hole-w) calc(var(--film-hole-w) + var(--film-hole-gap))
+          );
+          opacity: 0.96;
+          z-index: 2;
+        }
+
+        .film-negative-leader::before {
+          left: 0.38rem;
+          right: 0.22rem;
+          top: var(--film-hole-offset-y);
+        }
+
+        .film-negative-leader::after {
+          right: 0.28rem;
+          bottom: var(--film-hole-offset-y);
+          width: calc(var(--film-hole-w) * 2 + var(--film-hole-gap));
+        }
+
+        .film-negative-leader img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: fill;
+          object-position: left center;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        .film-negative-frames {
+          position: relative;
+          display: flex;
+          flex: 1 1 auto;
+          gap: 0.24rem;
+          height: var(--film-strip-height);
+          min-height: var(--film-strip-height);
+          overflow: hidden;
+          background: #050505;
+          padding: 0.58rem 0;
+          padding-right: 0;
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.1),
+            100vw 0 0 #050505;
+        }
+
+        .film-negative-frames::before,
+        .film-negative-frames::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: var(--film-hole-h);
+          background: repeating-linear-gradient(
+            90deg,
+            rgba(255,255,255,0.94) 0 var(--film-hole-w),
+            transparent var(--film-hole-w) calc(var(--film-hole-w) + var(--film-hole-gap))
+          );
+          opacity: 0.96;
+          z-index: 2;
+        }
+
+        .film-negative-frames::before {
+          top: var(--film-hole-offset-y);
+        }
+
+        .film-negative-frames::after {
+          bottom: var(--film-hole-offset-y);
+        }
+
+        .film-negative-strip::selection {
+          background: transparent;
+        }
+
+        .film-negative-strip::marker {
+          content: "";
+        }
+
+        .film-negative-frame {
+          flex: 0 0 clamp(6.2rem, 9.4vw, 10.8rem);
+          aspect-ratio: 4 / 3;
+          overflow: hidden;
+          background: #111;
+          border: 1px solid rgba(255,255,255,0.22);
+          border-left: 0;
+          opacity: 1;
+          transform: none;
+        }
+
+        .film-negative-frame.is-empty {
+          opacity: 1;
+          transform: none;
+          animation: film-empty-pulse 1.6s ease-in-out infinite alternate;
+          background:
+            linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0)),
+            #121212;
+          border-color: rgba(255,255,255,0.14);
+        }
+
+        .film-negative-frame img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: contrast(1.08) saturate(0.95);
+        }
+
+        @keyframes film-strip-enter {
+          0% {
+            transform: translateX(34%);
+            opacity: 0;
+          }
+
+          62% {
+            opacity: 1;
+          }
+
+          100% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes film-loading-scan {
+          0% {
+            transform: translateX(-120%);
+            opacity: 0;
+          }
+
+          24% {
+            opacity: 0.72;
+          }
+
+          100% {
+            transform: translateX(120%);
+            opacity: 0;
+          }
+        }
+
+        @keyframes film-loading-dot {
+          from {
+            opacity: 0.28;
+            transform: translateY(0);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(-1px);
+          }
+        }
+
+        @keyframes film-empty-pulse {
+          from {
+            background-color: #0d0d0d;
+          }
+
+          to {
+            background-color: #181818;
+          }
+        }
+
+        @media (max-width: 767px) {
+          .film-negative-preview {
+            padding: 0.5rem;
+          }
+
+          .film-negative-strip {
+            grid-template-columns: auto minmax(0, 1fr);
+            padding-left: 0;
+            padding-right: 0;
+          }
+
+          .film-negative-leader {
+            width: calc(var(--film-strip-height) * 1.187);
+          }
+
+          .film-negative-preview {
+            width: calc(100vw - 1rem);
+          }
+
+          .film-negative-frame {
+            flex-basis: clamp(5.2rem, 28vw, 7rem);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const CategoryArchiveDetail = ({
   language,
   category,
@@ -754,10 +1165,20 @@ const CategoryArchiveDetail = ({
   const localTitle = localCollection?.title[language] || title;
   const localDescription = localCollection?.description[language] || '';
   const [activePhotoCollection, setActivePhotoCollection] = useState<(LocalPortfolioCollection & { images: string[] }) | null>(null);
+  const localArchiveCollections = category === Category.PHOTO
+    ? LOCAL_PHOTOGRAPHY_COLLECTIONS
+    : category === Category.ENVIRONMENT
+      ? LOCAL_ENVIRONMENT_COLLECTIONS
+      : null;
 
-  if (category === Category.PHOTO) {
+  if (localArchiveCollections) {
     const previewTitle = activePhotoCollection?.title[language] || title;
     const previewDescription = activePhotoCollection?.description[language] || '';
+    const isInteriorDemo = activePhotoCollection?.id === 'interior-demo';
+    const isPhotoArchive = category === Category.PHOTO;
+    const projectLabel = category === Category.PHOTO
+      ? (language === 'zh' ? '摄影项目' : 'Photography Projects')
+      : (language === 'zh' ? '室内 / 环境设计项目' : 'Interior / Environment Projects');
 
     return (
       <section className="relative w-full -mt-6 md:-mt-10 min-h-[calc(100svh-6rem)] bg-white dark:bg-black text-black dark:text-white animate-fade-in">
@@ -773,7 +1194,7 @@ const CategoryArchiveDetail = ({
           className="absolute left-5 md:left-8 top-6 md:top-8 z-20 font-mono text-xs md:text-sm uppercase tracking-[0.14em] hover:translate-x-[-4px] transition-transform"
         >
           ← {activePhotoCollection
-            ? (language === 'zh' ? '返回静态摄影' : 'Back to Photography')
+            ? (language === 'zh' ? `返回${title}` : `Back to ${title}`)
             : (language === 'zh' ? '返回所有作品' : 'See All Works')}
         </button>
 
@@ -826,29 +1247,42 @@ const CategoryArchiveDetail = ({
                     ))}
                   </div>
                   <p className="mt-4 md:mt-6 font-mono text-[0.64rem] md:text-xs uppercase tracking-[0.12em] text-black/45">
-                    {language === 'zh'
-                      ? '按住照片左右拖动并松开即可翻页；点击当前照片可放大查看。'
-                      : 'Hold and drag left or right to flip. Click the current image to enlarge.'}
+                    {activePhotoCollection.images.length === 1
+                      ? (language === 'zh'
+                        ? '点击图片可放大查看。'
+                        : 'Click the image to enlarge.')
+                      : (language === 'zh'
+                        ? '按住照片左右拖动并松开即可翻页；点击当前照片可放大查看。'
+                        : 'Hold and drag left or right to flip. Click the current image to enlarge.')}
                   </p>
                   </div>
                 </div>
 
                 <div className="flex min-h-0 items-center justify-center overflow-visible py-2 md:py-3">
-                  <PhotoStackViewer images={activePhotoCollection.images} title={previewTitle} />
+                  {activePhotoCollection.images.length === 1 ? (
+                    <SingleImagePreview
+                      image={activePhotoCollection.images[0]}
+                      title={previewTitle}
+                      presentation={isInteriorDemo ? 'flush' : 'framed'}
+                    />
+                  ) : (
+                    <PhotoStackViewer images={activePhotoCollection.images} title={previewTitle} />
+                  )}
                 </div>
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_34vw] px-5 md:px-8 py-4 border-y border-dotted border-black/55 font-mono text-xs md:text-sm uppercase tracking-[0.08em]">
-                  <span>{language === 'zh' ? '摄影项目' : 'Photography Projects'}</span>
+                  <span>{projectLabel}</span>
                   <span className="hidden md:block">{language === 'zh' ? '预览' : 'Preview'}</span>
                 </div>
 
                 <div>
-                  {LOCAL_PHOTOGRAPHY_COLLECTIONS.map((project, index) => {
+                  {localArchiveCollections.map((project, index) => {
                     const projectTitle = project.title[language];
                     const projectDescription = project.description[language];
                     const coverImage = project.images[0];
+                    const isDemoCover = project.id === 'interior-demo';
 
                     return (
                       <button
@@ -856,35 +1290,52 @@ const CategoryArchiveDetail = ({
                         onClick={() => {
                           setActivePhotoCollection({
                             ...project,
-                            images: shuffleImages(project.images),
+                            images: project.images.length > 1 ? shuffleImages(project.images) : project.images,
                           });
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_32vw] md:hover:grid-cols-[minmax(0,0.82fr)_42vw] gap-4 md:gap-8 px-5 md:px-8 py-5 md:py-6 min-h-[8.5rem] md:min-h-[10rem] hover:min-h-[18rem] border-b border-dotted border-black/55 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
+                        className={isPhotoArchive
+                          ? 'group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,0.52fr)_minmax(30rem,50vw)] gap-4 md:gap-7 px-5 md:px-8 py-5 md:py-6 min-h-[11rem] md:min-h-[12rem] border-b border-dotted border-black/55 transition-colors duration-300 overflow-visible'
+                          : 'group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_32vw] md:hover:grid-cols-[minmax(0,0.82fr)_42vw] gap-4 md:gap-8 px-5 md:px-8 py-5 md:py-6 min-h-[8.5rem] md:min-h-[10rem] hover:min-h-[18rem] border-b border-dotted border-black/55 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden'}
                       >
                         <div className="flex flex-col justify-between gap-8 min-w-0">
                           <h3 className="font-serif text-2xl md:text-3xl lg:text-4xl leading-tight tracking-[-0.04em]">
                             {String(index + 1).padStart(2, '0')} / {projectTitle}
                           </h3>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-[10rem_minmax(0,1fr)] gap-4 font-mono text-xs md:text-sm uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-40 transition-all duration-500">
+                          <div className={isPhotoArchive
+                            ? 'grid grid-cols-1 gap-2 font-mono text-xs uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-48 transition-all duration-500'
+                            : 'grid grid-cols-1 sm:grid-cols-[10rem_minmax(0,1fr)] gap-4 font-mono text-xs md:text-sm uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-40 transition-all duration-500'}
+                          >
                             <span>{project.imageCount} images</span>
                             <span className="leading-relaxed">{project.tags.join(' / ')}</span>
-                            <p className="sm:col-span-2 normal-case tracking-normal text-sm md:text-base line-clamp-2 opacity-70">
+                            <p className={isPhotoArchive
+                              ? 'normal-case tracking-normal text-sm line-clamp-3 opacity-70'
+                              : 'sm:col-span-2 normal-case tracking-normal text-sm md:text-base line-clamp-2 opacity-70'}
+                            >
                               {projectDescription}
                             </p>
                           </div>
                         </div>
 
-                        <div className="relative h-28 md:h-full min-h-[7rem] overflow-hidden bg-black">
-                          <img
-                            src={coverImage}
-                            alt={projectTitle}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        </div>
+                        {isPhotoArchive ? (
+                          <FilmNegativePreview images={project.images} title={projectTitle} />
+                        ) : (
+                          <div className={isDemoCover
+                            ? 'relative h-36 md:h-48 lg:h-56 min-h-0 self-start overflow-hidden bg-black'
+                            : 'relative h-28 md:h-full min-h-[7rem] overflow-hidden bg-black'}
+                          >
+                            <img
+                              src={coverImage}
+                              alt={projectTitle}
+                              loading="lazy"
+                              decoding="async"
+                              className={isDemoCover
+                                ? 'h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105'
+                                : 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'}
+                            />
+                          </div>
+                        )}
                       </button>
                     );
                   })}

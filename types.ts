@@ -48,6 +48,8 @@ export interface ProjectCommon {
   externalLink?: string; // External link (e.g. Bilibili, Behance)
   websiteUrl?: string; // Online preview URL
   githubUrl?: string; // GitHub repository URL
+  date?: string;
+  year?: string;
 }
 
 export interface Project {

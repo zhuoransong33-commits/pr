@@ -15,11 +15,16 @@ export interface LocalPortfolioCollection {
   tags: string[];
   imageCount: number;
   basePath: string;
+  imageNumbers?: number[];
   images?: string[];
+  pdfUrl?: string;
 }
 
 const imageList = (basePath: string, count: number) =>
   Array.from({ length: count }, (_, index) => `${basePath}/${String(index + 1).padStart(2, '0')}.webp`);
+
+const numberedImageList = (basePath: string, numbers: number[]) =>
+  numbers.map((number) => `${basePath}/${String(number).padStart(2, '0')}.webp`);
 
 export const LOCAL_PORTFOLIO_COLLECTIONS: LocalPortfolioCollection[] = [
   {
@@ -67,8 +72,9 @@ export const LOCAL_PORTFOLIO_COLLECTIONS: LocalPortfolioCollection[] = [
       en: 'Static work set for graphic and interaction presentation.',
     },
     tags: ['Graphic', 'Interaction'],
-    imageCount: 32,
+    imageCount: 23,
     basePath: '/works/local/he',
+    imageNumbers: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 18, 19, 20, 23, 24, 25, 26, 27, 31, 32],
   },
   {
     id: 'local-architecture',
@@ -90,5 +96,62 @@ export const LOCAL_PORTFOLIO_COLLECTIONS: LocalPortfolioCollection[] = [
 
 export const LOCAL_PHOTOGRAPHY_COLLECTIONS = LOCAL_PORTFOLIO_COLLECTIONS.map((collection) => ({
   ...collection,
-  images: imageList(collection.basePath, collection.imageCount),
+  images: collection.imageNumbers
+    ? numberedImageList(collection.basePath, collection.imageNumbers)
+    : imageList(collection.basePath, collection.imageCount),
 }));
+
+export const LOCAL_ENVIRONMENT_COLLECTIONS: Array<LocalPortfolioCollection & { images: string[] }> = [
+  {
+    id: 'interior-demo',
+    category: Category.ENVIRONMENT,
+    folderName: '01演示',
+    title: {
+      zh: '01演示',
+      en: 'Demo 01',
+    },
+    description: {
+      zh: '室内设计毕业设计演示与展板整理。',
+      en: 'Interior design graduation presentation and board archive.',
+    },
+    tags: ['Interior', 'Presentation', 'Board'],
+    imageCount: 1,
+    basePath: '/works/local/interior/demo',
+    images: imageList('/works/local/interior/demo', 1),
+    pdfUrl: '/works/local/interior/demo/01-demo.pdf',
+  },
+  {
+    id: 'interior-analysis',
+    category: Category.ENVIRONMENT,
+    folderName: '分析图',
+    title: {
+      zh: '分析图',
+      en: 'Analysis Diagrams',
+    },
+    description: {
+      zh: '包含区位、动线、功能、材质、色彩等设计分析图。',
+      en: 'Design analysis diagrams including location, circulation, function, material, and color.',
+    },
+    tags: ['Analysis', 'Diagram', 'Interior'],
+    imageCount: 8,
+    basePath: '/works/local/interior/analysis',
+    images: imageList('/works/local/interior/analysis', 8),
+  },
+  {
+    id: 'interior-renders',
+    category: Category.ENVIRONMENT,
+    folderName: '效果图',
+    title: {
+      zh: '效果图',
+      en: 'Renderings',
+    },
+    description: {
+      zh: '前厅、办公室、口播室、制图室等空间效果图整理。',
+      en: 'Renderings for lobby, office, recording, and drafting spaces.',
+    },
+    tags: ['Rendering', 'Space', 'Interior'],
+    imageCount: 15,
+    basePath: '/works/local/interior/renders',
+    images: imageList('/works/local/interior/renders', 15),
+  },
+];
