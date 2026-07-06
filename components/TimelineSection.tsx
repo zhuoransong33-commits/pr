@@ -439,18 +439,18 @@ const ArchiveTable = ({ title, headers, children, onTitleClick }: { title: strin
       <button
         type="button"
         onClick={onTitleClick}
-        className="block w-full px-4 md:px-5 py-4 text-left font-serif text-[clamp(3.2rem,6.3vw,8rem)] leading-[0.86] tracking-[-0.07em] text-[#2a2a2a] outline-none transition-colors hover:text-black dark:text-white"
+        className="block w-full px-4 py-4 text-left font-sans text-[clamp(0.95rem,1.1vw,1.15rem)] font-semibold leading-[1.35] tracking-[-0.01em] text-[#2a2a2a] outline-none transition-colors hover:text-black dark:text-white md:px-5"
       >
         {title}
       </button>
     ) : (
-      <h2 className="px-4 md:px-5 py-4 font-serif text-[clamp(3.2rem,6.3vw,8rem)] leading-[0.86] tracking-[-0.07em] text-[#2a2a2a] dark:text-white">
+      <h2 className="px-4 py-4 font-sans text-[clamp(0.95rem,1.1vw,1.15rem)] font-semibold leading-[1.35] tracking-[-0.01em] text-[#2a2a2a] dark:text-white md:px-5">
         {title}
       </h2>
     )}
     <div className="grid grid-cols-3 border-y border-dotted border-black/35 dark:border-white/25">
       {headers.map((header) => (
-        <div key={header} className="px-4 md:px-5 py-3 font-mono text-[0.68rem] md:text-xs uppercase tracking-[0.16em] text-black/65 dark:text-white/55">
+        <div key={header} className="px-4 py-3 font-sans text-[0.82rem] font-semibold uppercase leading-relaxed tracking-[0.08em] text-black/72 dark:text-white/65 md:px-5 md:text-[0.95rem]">
           {header}
         </div>
       ))}
@@ -463,7 +463,7 @@ const TableRow = ({ cells, description }: { cells: string[]; description?: strin
   <article className="grid grid-cols-1 border-b border-dotted border-black/35 transition-colors hover:bg-black/[0.035] dark:border-white/25 dark:hover:bg-white/[0.06] md:grid-cols-3">
     {cells.map((cell, index) => (
       <div key={`${cell}-${index}`} className="min-w-0 px-4 md:px-5 py-4 md:py-5">
-        <p className={index === 1 ? 'font-serif text-[clamp(1.55rem,2.3vw,3.4rem)] leading-[1.05] tracking-[-0.055em]' : 'font-mono text-xs md:text-sm uppercase leading-relaxed tracking-[0.08em] text-black/72 dark:text-white/65'}>
+        <p className={index === 1 ? 'font-sans text-[clamp(1.02rem,1.35vw,1.5rem)] font-medium leading-[1.35] tracking-[-0.015em]' : 'font-sans text-[0.82rem] md:text-[0.95rem] uppercase leading-relaxed tracking-[0.04em] text-black/70 dark:text-white/65'}>
           {cell}
         </p>
         {description && index === 1 && <p className="mt-4 hidden max-w-xl text-sm leading-relaxed text-black/58 dark:text-white/55 xl:block">{description}</p>}
@@ -521,14 +521,14 @@ const ProfileContent = ({ profileText, contactRows }: { profileText: string; con
       </div>
     </div>
     <div>
-      <p className="font-sans text-[clamp(1.05rem,1.65vw,2.15rem)] leading-[1.42] tracking-[-0.025em] text-black/82">
+      <p className="font-sans text-[clamp(0.96rem,1.28vw,1.48rem)] font-normal leading-[1.55] tracking-[-0.01em] text-black/78">
         {profileText}
       </p>
       <div className="mt-16 border-t border-dotted border-black/35">
         {contactRows.map(([key, value]) => (
           <div key={key} className="grid grid-cols-[8rem_minmax(0,1fr)] border-b border-dotted border-black/25 py-3">
-            <span className="font-sans text-xl tracking-[-0.025em]">{key}</span>
-            <span className="font-sans text-sm uppercase leading-relaxed tracking-[0.04em] text-black/68">{value}</span>
+            <span className="font-sans text-[0.95rem] font-semibold tracking-[-0.01em]">{key}</span>
+            <span className="font-sans text-[0.86rem] uppercase leading-relaxed tracking-[0.04em] text-black/68">{value}</span>
           </div>
         ))}
       </div>
@@ -576,8 +576,8 @@ const AboutFooter = ({ contactRows }: { contactRows: [string, string][] }) => (
     <div className="mx-auto grid max-w-[112rem] grid-cols-2 gap-6 md:grid-cols-4">
       {contactRows.map(([key, value]) => (
         <div key={key}>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white/55">{key}</p>
-          <p className="mt-2 font-mono text-xs uppercase tracking-[0.08em] text-white/75">{value}</p>
+          <p className="font-sans text-[0.86rem] font-semibold uppercase tracking-[0.08em] text-white/70">{key}</p>
+          <p className="mt-2 font-sans text-[0.78rem] uppercase leading-relaxed tracking-[0.05em] text-white/72">{value}</p>
         </div>
       ))}
     </div>

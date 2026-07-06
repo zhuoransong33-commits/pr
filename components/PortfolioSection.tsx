@@ -5,10 +5,86 @@ import { PROJECTS, CATEGORY_LABELS } from '../constants';
 import { Category, Language, ProjectDisplay } from '../types';
 import { PHOTOGRAPHY_GALLERY } from '../src/data/photography';
 import { LOCAL_ENVIRONMENT_COLLECTIONS, LOCAL_PHOTOGRAPHY_COLLECTIONS, LocalPortfolioCollection } from '../src/data/localPortfolio';
-import { ArrowUpRight, X, Github, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, X, Github, ExternalLink, ChevronLeft, ChevronRight, Lock, Play } from 'lucide-react';
 
 const BBQ_CATEGORY = 'bbq';
 const PHOTO_COLLECTION_CATEGORY = 'photo-collection';
+
+const isPhotoCollectionProject = (project: { category?: string; id?: string }) =>
+  project.category === PHOTO_COLLECTION_CATEGORY || String(project.id || '').startsWith('photo-collection');
+
+const PrivateVideoPlaceholder = ({
+  language,
+  title,
+  poster,
+}: {
+  language: Language;
+  title: string;
+  poster?: string;
+}) => (
+  <div className="relative h-full w-full overflow-hidden bg-black text-white">
+    {poster && (
+      <img
+        src={poster}
+        alt={title}
+        referrerPolicy="no-referrer"
+        className="h-full w-full object-cover opacity-45"
+      />
+    )}
+    <div className="absolute inset-0 bg-black/55" />
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-8 text-center">
+      <div className="grid h-16 w-16 place-items-center rounded-full border border-white/35 bg-white/10">
+        <Lock size={28} />
+      </div>
+      <div className="max-w-xl">
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.22em] text-white/60">
+          Private Video
+        </p>
+        <h3 className="text-2xl md:text-4xl font-black leading-tight">
+          {language === 'zh' ? '私有视频源未配置' : 'Private video source is not configured'}
+        </h3>
+        <p className="mt-4 text-sm md:text-base leading-relaxed text-white/70">
+          {language === 'zh'
+            ? '设置 VITE_POJIAN_VIDEO_URL 为受控访问的视频地址后，本地预览和线上站点都会使用同一个播放器播放。'
+            : 'Set VITE_POJIAN_VIDEO_URL to a controlled-access video URL so local preview and production use the same player.'}
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const PhotoAlbumCoverPreview = ({ compact = false }: { compact?: boolean }) => (
+  <div className="h-full w-full bg-white text-black">
+    <div className="flex h-full w-full flex-col items-center justify-center px-[8%] py-[7%]">
+      <div className="grid w-full max-w-[42rem] grid-cols-3 items-end gap-[8%]">
+        {['摄', '影', '集'].map((character) => (
+          <div key={character} className="text-center">
+            <div
+              className={`font-serif leading-none tracking-[-0.04em] ${
+                compact ? 'text-[clamp(2.2rem,6vw,5.2rem)]' : 'text-[clamp(2.4rem,4.8vw,5rem)]'
+              }`}
+            >
+              {character}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div
+        className={`mt-[2.8%] w-full max-w-[42rem] text-center font-mono lowercase text-black/55 ${
+          compact ? 'text-[clamp(0.58rem,1.7vw,1.5rem)]' : 'text-[clamp(0.7rem,1.25vw,1.45rem)]'
+        }`}
+        style={{ letterSpacing: compact ? '0.72em' : '0.86em' }}
+      >
+        photography album
+      </div>
+
+      <div className={`mt-[4.2%] font-mono text-black/65 ${compact ? 'text-[0.56rem]' : 'text-xs'}`}>
+        Produced in Dec2025
+      </div>
+    </div>
+  </div>
+);
 
 interface PortfolioSectionProps {
   language: Language;
@@ -307,8 +383,8 @@ const ArchiveCategoryTabs = ({
       .archive-folder-title {
         position: relative;
         z-index: 2;
-        padding-top: clamp(2.05rem, 6.6vw, 2.7rem);
-        font-size: clamp(2rem, 7.45vw, 3rem);
+        padding-top: clamp(1.35rem, 4.5vw, 1.75rem);
+        font-size: clamp(1.75rem, 6.55vw, 2.55rem);
       }
 
       @media (max-width: 420px) {
@@ -319,8 +395,8 @@ const ArchiveCategoryTabs = ({
         }
 
         .archive-folder-title {
-          padding-top: 2.1rem;
-          font-size: clamp(1.85rem, 8.4vw, 2.55rem);
+          padding-top: 1.35rem;
+          font-size: clamp(1.65rem, 7.35vw, 2.2rem);
         }
       }
 
@@ -345,8 +421,8 @@ const ArchiveCategoryTabs = ({
         }
 
         .archive-folder-title {
-          padding-top: clamp(2.4rem, 5vw, 2.9rem);
-          font-size: clamp(2.75rem, 5.7vw, 3.25rem);
+          padding-top: clamp(1.65rem, 3.75vw, 2.15rem);
+          font-size: clamp(2.35rem, 5vw, 2.85rem);
         }
       }
 
@@ -367,8 +443,8 @@ const ArchiveCategoryTabs = ({
         }
 
         .archive-folder-title {
-          padding-top: clamp(2rem, 5.4vw, 2.55rem);
-          font-size: clamp(1.95rem, 7vw, 3rem);
+          padding-top: clamp(1.25rem, 4vw, 1.75rem);
+          font-size: clamp(1.68rem, 6.1vw, 2.5rem);
         }
       }
 
@@ -1281,13 +1357,17 @@ const CategoryArchiveDetail = ({
                   {localArchiveCollections.map((project, index) => {
                     const projectTitle = project.title[language];
                     const projectDescription = project.description[language];
-                    const coverImage = project.images[0];
+                    const coverImage = project.coverImage || project.images[0];
+                    const hasCustomCover = Boolean(project.coverImage);
                     const isDemoCover = project.id === 'interior-demo';
+                    const isPlaceholder = project.isPlaceholder || project.images.length === 0;
 
                     return (
                       <button
                         key={project.id}
+                        disabled={isPlaceholder}
                         onClick={() => {
+                          if (isPlaceholder) return;
                           setActivePhotoCollection({
                             ...project,
                             images: project.images.length > 1 ? shuffleImages(project.images) : project.images,
@@ -1296,7 +1376,7 @@ const CategoryArchiveDetail = ({
                         }}
                         className={isPhotoArchive
                           ? 'group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,0.52fr)_minmax(30rem,50vw)] gap-4 md:gap-7 px-5 md:px-8 py-5 md:py-6 min-h-[11rem] md:min-h-[12rem] border-b border-dotted border-black/55 transition-colors duration-300 overflow-visible'
-                          : 'group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_32vw] md:hover:grid-cols-[minmax(0,0.82fr)_42vw] gap-4 md:gap-8 px-5 md:px-8 py-5 md:py-6 min-h-[8.5rem] md:min-h-[10rem] hover:min-h-[18rem] border-b border-dotted border-black/55 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden'}
+                          : `group w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_32vw] ${isPlaceholder ? 'cursor-default opacity-75' : 'md:hover:grid-cols-[minmax(0,0.82fr)_42vw]'} gap-4 md:gap-8 px-5 md:px-8 py-5 md:py-6 min-h-[8.5rem] md:min-h-[10rem] ${isPlaceholder ? '' : 'hover:min-h-[18rem]'} border-b border-dotted border-black/55 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden`}
                       >
                         <div className="flex flex-col justify-between gap-8 min-w-0">
                           <h3 className="font-serif text-2xl md:text-3xl lg:text-4xl leading-tight tracking-[-0.04em]">
@@ -1307,7 +1387,7 @@ const CategoryArchiveDetail = ({
                             ? 'grid grid-cols-1 gap-2 font-mono text-xs uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-48 transition-all duration-500'
                             : 'grid grid-cols-1 sm:grid-cols-[10rem_minmax(0,1fr)] gap-4 font-mono text-xs md:text-sm uppercase tracking-[0.08em] opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-40 transition-all duration-500'}
                           >
-                            <span>{project.imageCount} images</span>
+                            <span>{isPlaceholder ? (language === 'zh' ? '待补充' : 'Pending') : `${project.imageCount} images`}</span>
                             <span className="leading-relaxed">{project.tags.join(' / ')}</span>
                             <p className={isPhotoArchive
                               ? 'normal-case tracking-normal text-sm line-clamp-3 opacity-70'
@@ -1325,15 +1405,27 @@ const CategoryArchiveDetail = ({
                             ? 'relative h-36 md:h-48 lg:h-56 min-h-0 self-start overflow-hidden bg-black'
                             : 'relative h-28 md:h-full min-h-[7rem] overflow-hidden bg-black'}
                           >
-                            <img
-                              src={coverImage}
-                              alt={projectTitle}
-                              loading="lazy"
-                              decoding="async"
-                              className={isDemoCover
-                                ? 'h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105'
-                                : 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'}
-                            />
+                            {isPlaceholder ? (
+                              <div className="flex h-full w-full items-center justify-center bg-[repeating-linear-gradient(135deg,#d1d1cf_0,#d1d1cf_12px,#c4c4c2_12px,#c4c4c2_24px)]">
+                                <span className="font-mono text-xs uppercase tracking-[0.18em] text-black/45">
+                                  {language === 'zh' ? '项目占位' : 'Project Placeholder'}
+                                </span>
+                              </div>
+                            ) : isPhotoCollectionProject(project) ? (
+                              <PhotoAlbumCoverPreview compact />
+                            ) : (
+                              <img
+                                src={coverImage}
+                                alt={projectTitle}
+                                loading="lazy"
+                                decoding="async"
+                                className={hasCustomCover
+                                  ? 'h-full w-full object-contain bg-white transition-transform duration-500 group-hover:scale-[1.02]'
+                                  : isDemoCover
+                                  ? 'h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105'
+                                  : 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'}
+                              />
+                            )}
                           </div>
                         )}
                       </button>
@@ -1490,7 +1582,9 @@ const CategoryArchiveDetail = ({
                   </div>
 
                   <div className="relative h-28 md:h-full min-h-[7rem] overflow-hidden bg-black">
-                    {image ? (
+                    {isPhotoCollectionProject(project) ? (
+                      <PhotoAlbumCoverPreview compact />
+                    ) : image ? (
                       <img
                         src={image}
                         alt={project.title}
@@ -1696,6 +1790,56 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
                 <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-50 p-3 bg-black/10 dark:bg-white/10 rounded-full hover:rotate-90 transition-transform">
                   <X size={28} />
                 </button>
+                <div className={`${displayProject.pdfUrl ? 'h-[72svh]' : 'aspect-video'} w-full overflow-hidden bg-black`}>
+                  {displayProject.pdfUrl ? (
+                    <div className="relative h-full w-full bg-[#2f2f2f]">
+                      <a
+                        href={displayProject.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="absolute right-4 top-4 z-10 rounded-full bg-white px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] text-black shadow-lg transition-transform hover:-translate-y-0.5"
+                      >
+                        {language === 'zh' ? '新标签打开 PDF' : 'Open PDF'}
+                      </a>
+                      <iframe
+                        src={`${displayProject.pdfUrl}#view=FitH`}
+                        title={displayProject.title}
+                        className="h-full w-full border-0 bg-white"
+                      />
+                    </div>
+                  ) : displayProject.videoUrl ? (
+                    <video
+                      src={displayProject.videoUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      poster={displayProject.image}
+                      className="h-full w-full object-contain bg-black"
+                    />
+                  ) : displayProject.bilibiliId ? (
+                    <iframe
+                      src={`https://player.bilibili.com/player.html?bvid=${displayProject.bilibiliId}&page=1&high_quality=1&danmaku=0&autoplay=0`}
+                      className="h-full w-full border-0"
+                      scrolling="no"
+                      frameBorder="0"
+                      allowFullScreen
+                      sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts allow-presentation"
+                    />
+                  ) : displayProject.category === Category.VIDEO ? (
+                    <PrivateVideoPlaceholder
+                      language={language}
+                      title={displayProject.title}
+                      poster={displayProject.image}
+                    />
+                  ) : displayProject.image ? (
+                    <img
+                      src={displayProject.image}
+                      alt={displayProject.title}
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
                 <div className="p-8 md:p-12">
                   <h2 className="text-4xl md:text-6xl font-black mb-4 text-black dark:text-white">{(displayProject as any).title}</h2>
                   <p className="text-xl text-gray-500 dark:text-gray-400 mb-8">{(displayProject as any).description}</p>
@@ -1830,7 +1974,10 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
             <>
                   {/* Image container */}
                   <div className="w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 mb-6 overflow-hidden rounded-2xl relative shadow-none border border-transparent transition-all duration-500 group-hover:shadow-2xl dark:group-hover:shadow-none dark:group-hover:border-white/20 transform-gpu">
-                    {project.image && !project.image.includes('picsum') ? (
+                    {isPhotoCollectionProject(project) ? (
+                      <PhotoAlbumCoverPreview compact />
+                    ) : project.image && !project.image.includes('picsum') ? (
+                      <div className="relative h-full w-full">
                         <img 
                           src={project.image} 
                           alt={project.title} 
@@ -1839,6 +1986,14 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 will-change-transform"
                         />
+                        {project.category === Category.VIDEO && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20">
+                            <div className="grid h-14 w-14 place-items-center rounded-full bg-white/90 text-black shadow-xl transition-transform duration-300 group-hover:scale-110">
+                              <Play size={24} fill="currentColor" className="ml-1" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : project.bilibiliId ? (
                         <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors duration-300">
                             <div className="flex flex-col items-center gap-4">
@@ -2019,14 +2174,32 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
                      {/* Hero Media (Video, Bilibili, Figma or Image) */}
                      <div className={`
                         w-full bg-gray-200 dark:bg-gray-800 relative group-modal-media shrink-0
-                        ${(displayProject.figmaUrl || displayProject.websiteUrl) ? 'h-[60vh] md:h-[80vh]' : 
+                        ${(displayProject.pdfUrl || displayProject.figmaUrl || displayProject.websiteUrl) ? 'h-[60vh] md:h-[80vh]' : 
                           (displayProject.videoUrl || displayProject.bilibiliId) ? 'aspect-video' : 
                           'h-[30vh] md:h-[50vh]'}
                      `}>
-                        {displayProject.videoUrl ? (
+                        {displayProject.pdfUrl ? (
+                           <div className="relative h-full w-full bg-[#2f2f2f]">
+                             <a
+                               href={displayProject.pdfUrl}
+                               target="_blank"
+                               rel="noreferrer"
+                               className="absolute right-4 top-4 z-10 rounded-full bg-white px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] text-black shadow-lg transition-transform hover:-translate-y-0.5"
+                             >
+                               {language === 'zh' ? '新标签打开 PDF' : 'Open PDF'}
+                             </a>
+                             <iframe
+                               src={`${displayProject.pdfUrl}#view=FitH`}
+                               className="w-full h-full border-none bg-white"
+                               title={displayProject.title}
+                             />
+                           </div>
+                        ) : displayProject.videoUrl ? (
                            <video 
                               src={displayProject.videoUrl} 
                               controls 
+                              playsInline
+                              preload="metadata"
                               className="w-full h-full object-contain bg-black"
                               poster={displayProject.image}
                            />
@@ -2055,6 +2228,12 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ language, ex
                              title={displayProject.title}
                              allowFullScreen
                            ></iframe>
+                        ) : displayProject.category === Category.VIDEO ? (
+                           <PrivateVideoPlaceholder
+                             language={language}
+                             title={displayProject.title}
+                             poster={displayProject.image}
+                           />
                         ) : (
                            <>
                               {displayProject.image && !displayProject.image.includes('picsum') ? (

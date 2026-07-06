@@ -42,6 +42,7 @@ export interface ProjectCommon {
   category: Category | string;
   image: string; // URL placeholder (Cover/Thumbnail)
   figmaUrl?: string; // Figma File URL
+  pdfUrl?: string; // PDF preview URL
   gallery?: string[]; // Additional images (URLs)
   videoUrl?: string; // URL to .mp4 file
   bilibiliId?: string; // Bilibili Video ID (e.g. BV1xx...)

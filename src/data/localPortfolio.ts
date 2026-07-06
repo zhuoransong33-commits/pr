@@ -3,6 +3,7 @@ import { Category } from '../../types';
 export interface LocalPortfolioCollection {
   id: string;
   category: Category;
+  isPlaceholder?: boolean;
   folderName: string;
   title: {
     zh: string;
@@ -15,6 +16,7 @@ export interface LocalPortfolioCollection {
   tags: string[];
   imageCount: number;
   basePath: string;
+  coverImage?: string;
   imageNumbers?: number[];
   images?: string[];
   pdfUrl?: string;
@@ -25,6 +27,9 @@ const imageList = (basePath: string, count: number) =>
 
 const numberedImageList = (basePath: string, numbers: number[]) =>
   numbers.map((number) => `${basePath}/${String(number).padStart(2, '0')}.webp`);
+
+const numberedPngList = (basePath: string, count: number) =>
+  Array.from({ length: count }, (_, index) => `${basePath}/${String(index + 1).padStart(2, '0')}.png`);
 
 export const LOCAL_PORTFOLIO_COLLECTIONS: LocalPortfolioCollection[] = [
   {
@@ -105,10 +110,10 @@ export const LOCAL_ENVIRONMENT_COLLECTIONS: Array<LocalPortfolioCollection & { i
   {
     id: 'interior-demo',
     category: Category.ENVIRONMENT,
-    folderName: '01演示',
+    folderName: '创意办公空间展板',
     title: {
-      zh: '01演示',
-      en: 'Demo 01',
+      zh: '创意办公空间展板',
+      en: 'Creative Office Space Boards',
     },
     description: {
       zh: '室内设计毕业设计演示与展板整理。',
@@ -123,10 +128,10 @@ export const LOCAL_ENVIRONMENT_COLLECTIONS: Array<LocalPortfolioCollection & { i
   {
     id: 'interior-analysis',
     category: Category.ENVIRONMENT,
-    folderName: '分析图',
+    folderName: '创意办公空间分析图',
     title: {
-      zh: '分析图',
-      en: 'Analysis Diagrams',
+      zh: '创意办公空间分析图',
+      en: 'Creative Office Space Analysis',
     },
     description: {
       zh: '包含区位、动线、功能、材质、色彩等设计分析图。',
@@ -140,10 +145,10 @@ export const LOCAL_ENVIRONMENT_COLLECTIONS: Array<LocalPortfolioCollection & { i
   {
     id: 'interior-renders',
     category: Category.ENVIRONMENT,
-    folderName: '效果图',
+    folderName: '创意办公空间效果图',
     title: {
-      zh: '效果图',
-      en: 'Renderings',
+      zh: '创意办公空间效果图',
+      en: 'Creative Office Space Renderings',
     },
     description: {
       zh: '前厅、办公室、口播室、制图室等空间效果图整理。',
@@ -153,5 +158,23 @@ export const LOCAL_ENVIRONMENT_COLLECTIONS: Array<LocalPortfolioCollection & { i
     imageCount: 15,
     basePath: '/works/local/interior/renders',
     images: imageList('/works/local/interior/renders', 15),
+  },
+  {
+    id: 'interior-digital-exhibition',
+    category: Category.ENVIRONMENT,
+    folderName: '南京爻石博物馆数字展厅',
+    title: {
+      zh: '南京爻石博物馆数字展厅',
+      en: 'Nanjing Yaoshi Museum Digital Exhibition Hall',
+    },
+    description: {
+      zh: '南京爻石博物馆数字展厅空间效果与交互展示整理。',
+      en: 'Spatial renderings and interactive presentation materials for the Nanjing Yaoshi Museum digital exhibition hall.',
+    },
+    tags: ['Digital Exhibition', 'Museum', 'Interior'],
+    imageCount: 12,
+    basePath: '/works/local/interior/digital-exhibition',
+    coverImage: '/works/local/interior/digital-exhibition/cover-yaoshi.png',
+    images: numberedPngList('/works/local/interior/digital-exhibition', 12),
   },
 ];

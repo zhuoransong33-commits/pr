@@ -6,6 +6,7 @@ export const VIDEOGRAPHY_DATA: Project[] = [
     common: {
       category: Category.VIDEO,
       image: '/works/local/video/pojian-cover.jpg',
+      videoUrl: import.meta.env.VITE_POJIAN_VIDEO_URL || (import.meta.env.DEV ? import.meta.env.VITE_DEV_POJIAN_VIDEO_URL : undefined),
       year: '2024',
       date: '2024',
     },
