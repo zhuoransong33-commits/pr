@@ -375,9 +375,6 @@ function App() {
               onCategorySelect={handleHeroNavigation}
               language={language} 
             />
-            <div className="relative z-[80] bg-white dark:bg-black pt-24 transition-colors duration-300">
-              <PortfolioSection language={language} externalFilter={portfolioCategory} />
-            </div>
           </>
         );
       case 'portfolio':
@@ -497,9 +494,6 @@ function App() {
               onCategorySelect={handleHeroNavigation}
               language={language} 
             />
-            <div className="relative z-[80] bg-white dark:bg-black pt-24 transition-colors duration-300">
-              <PortfolioSection language={language} externalFilter={portfolioCategory} />
-            </div>
           </>
         );
     }
@@ -520,13 +514,13 @@ function App() {
       />
 
       {/* Main Content Area */}
-      <main className={`w-full ${activeTab === 'portfolio' || activeTab === 'about' ? 'pt-24 pb-0' : 'pt-40 pb-32'} vt-page`}>
+      <main className={`w-full ${activeTab === 'portfolio' || activeTab === 'about' ? 'pt-24 pb-0' : activeTab === 'dashboard' ? 'pt-40 pb-0' : 'pt-40 pb-32'} vt-page`}>
          <div key={activeTab} className={activeTab === 'about' ? '' : 'animate-fade-in'}>
            {renderContent()}
          </div>
 
          {/* Footer */}
-         <footer className={`${activeTab === 'portfolio' || activeTab === 'about' ? 'hidden' : 'flex'} w-full max-w-[96vw] mx-auto mt-32 border-t-2 border-black dark:border-white pt-12 flex-col md:flex-row justify-between items-center text-sm font-light text-gray-400 dark:text-gray-500 uppercase tracking-wide gap-4 transition-colors duration-300`}>
+          <footer className={`${activeTab === 'dashboard' || activeTab === 'portfolio' || activeTab === 'about' ? 'hidden' : 'flex'} w-full max-w-[96vw] mx-auto mt-32 border-t-2 border-black dark:border-white pt-12 flex-col md:flex-row justify-between items-center text-sm font-light text-gray-400 dark:text-gray-500 uppercase tracking-wide gap-4 transition-colors duration-300`}>
             <p>© 2026 ZHUORAN SONG</p>
             <p>{content.footerDesign}</p>
          </footer>

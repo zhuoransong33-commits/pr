@@ -24,11 +24,13 @@ interface ArchiveFolder {
   image: string;
 }
 
+const xuPhotoImages = Array.from({ length: 18 }, (_, index) => `/works/local/xu/${String(index + 1).padStart(2, '0')}.webp`);
+
 const folderImages = {
-  photo: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80',
-  video: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80',
-  graphic: 'https://www.figma.com/file/hslZfU850zu8tJ6P1Y6fbC/thumbnail',
-  interior: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1800&q=80',
+  photo: xuPhotoImages[0],
+  video: '/works/featured/featured-02.webp',
+  graphic: '/works/featured/featured-03.webp',
+  interior: '/works/featured/featured-04.webp',
 };
 
 const zhFolders: ArchiveFolder[] = [
@@ -122,10 +124,15 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategorySelect, language }) => {
   const content = HOME_DATA[language];
   const contactContent = CONTACT_DATA[language];
-  const folders = language === 'zh' ? zhFolders : enFolders;
+  const [featuredPhotoImage] = useState(() => xuPhotoImages[Math.floor(Math.random() * xuPhotoImages.length)]);
+  const folders = (language === 'zh' ? zhFolders : enFolders).map((folder) =>
+    folder.id === 'photo' ? { ...folder, image: featuredPhotoImage } : folder
+  );
   const [showToast, setShowToast] = useState(false);
   const [landingProgress, setLandingProgress] = useState(0);
+  const [outroProgress, setOutroProgress] = useState(0);
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const outroRef = useRef<HTMLElement | null>(null);
   const folderDockTop = 'clamp(7.5rem, 10vw, 8.75rem)';
 
   useEffect(() => {
@@ -137,6 +144,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
       const top = heroRef.current.getBoundingClientRect().top + window.scrollY;
       const progress = (window.scrollY - top) / Math.max(window.innerHeight, 1);
       setLandingProgress(clamp(progress, 0, 1));
+    };
+
+    const requestUpdate = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updateProgress = () => {
+      if (!outroRef.current) return;
+
+      const rect = outroRef.current.getBoundingClientRect();
+      const start = window.innerHeight * 0.92;
+      const end = window.innerHeight * 0.18;
+      const progress = (start - rect.top) / Math.max(start - end, 1);
+      setOutroProgress(clamp(progress, 0, 1));
     };
 
     const requestUpdate = () => {
@@ -227,6 +263,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
 
   const landingShift = landingProgress * -12;
   const landingOpacity = clamp(1 - landingProgress * 1.15, 0, 1);
+  const outroShift = (1 - outroProgress) * 8;
 
   return (
     <div
@@ -244,6 +281,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
           }}
         >
           <div className="max-w-6xl">
+            <div className="max-w-6xl">
             <p className="font-mono text-xs md:text-sm uppercase tracking-[0.32em] text-white/50 mb-9 md:mb-12">
               {language === 'zh' ? '个人作品档案 / 滚动索引' : 'Personal Work Archive / Scroll Index'}
             </p>
@@ -253,6 +291,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
             <p className="mt-12 md:mt-16 max-w-3xl text-xl md:text-3xl leading-snug text-white/72 font-medium">
               {content.intro.split('|').join(' ')}
             </p>
+            </div>
+
+            <footer className="mt-auto flex w-full flex-col items-start justify-between gap-4 border-t border-white/75 pt-8 font-mono text-xs uppercase tracking-[0.12em] text-white/45 md:flex-row md:items-center md:text-sm">
+              <p>© 2026 ZHUORAN SONG</p>
+              <p>{contactContent.footerDesign}</p>
+            </footer>
           </div>
         </section>
 
@@ -330,7 +374,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
                         <img
                           src={folder.image}
                           alt={folder.title}
-                          className="w-full h-full object-cover grayscale-[15%] hover:grayscale-0 transition-all duration-500"
+                          className="w-full h-full object-contain grayscale-[15%] hover:grayscale-0 transition-all duration-500"
                           referrerPolicy="no-referrer"
                         />
                       </div>
@@ -368,6 +412,30 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
           );
         })}
       </section>
+
+        <section
+          ref={outroRef}
+          data-landing-outro
+          className="relative z-0 h-screen overflow-hidden bg-[#121212] text-white"
+        >
+          <div
+            className="flex h-full max-w-none flex-col px-5 pb-8 pt-40 transition-[opacity,transform] duration-300 ease-out md:px-10 md:pb-10 md:pt-48 lg:px-[4vw] lg:pb-12 lg:pt-[15vh]"
+            style={{
+              opacity: outroProgress,
+              transform: `translate3d(0, ${outroShift}vh, 0)`,
+            }}
+          >
+            <p className="font-mono text-xs md:text-sm uppercase tracking-[0.32em] text-white/50 mb-9 md:mb-12">
+              {language === 'zh' ? '个人作品档案 / 滚动索引' : 'Personal Work Archive / Scroll Index'}
+            </p>
+            <h2 className="text-[18vw] md:text-[12vw] lg:text-[8.8vw] leading-[0.82] font-black tracking-[-0.08em] uppercase">
+              Zhuoran<br />Song
+            </h2>
+            <p className="mt-12 md:mt-16 max-w-3xl text-xl md:text-3xl leading-snug text-white/72 font-medium">
+              {content.intro.split('|').join(' ')}
+            </p>
+          </div>
+        </section>
 
       <style>{`
         @keyframes marquee {
