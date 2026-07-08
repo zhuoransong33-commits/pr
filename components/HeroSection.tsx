@@ -293,10 +293,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
             </p>
             </div>
 
-            <footer className="mt-auto flex w-full flex-col items-start justify-between gap-4 border-t border-white/75 pt-8 font-mono text-xs uppercase tracking-[0.12em] text-white/45 md:flex-row md:items-center md:text-sm">
-              <p>© 2026 ZHUORAN SONG</p>
-              <p>{contactContent.footerDesign}</p>
-            </footer>
           </div>
         </section>
 
@@ -419,7 +415,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
           className="relative z-0 h-screen overflow-hidden bg-[#121212] text-white"
         >
           <div
-            className="flex h-full max-w-none flex-col px-5 pb-8 pt-40 transition-[opacity,transform] duration-300 ease-out md:px-10 md:pb-10 md:pt-48 lg:px-[4vw] lg:pb-12 lg:pt-[15vh]"
+            className="relative h-full max-w-none px-5 pb-8 pt-40 transition-[opacity,transform] duration-300 ease-out md:px-10 md:pb-10 md:pt-48 lg:px-[4vw] lg:pb-12 lg:pt-[15vh]"
             style={{
               opacity: outroProgress,
               transform: `translate3d(0, ${outroShift}vh, 0)`,
@@ -434,6 +430,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onCategory
             <p className="mt-12 md:mt-16 max-w-3xl text-xl md:text-3xl leading-snug text-white/72 font-medium">
               {content.intro.split('|').join(' ')}
             </p>
+            <footer className="absolute bottom-8 left-5 right-5 flex flex-col items-start justify-between gap-4 border-t border-white/75 pt-8 font-mono text-xs uppercase tracking-[0.12em] text-white/45 md:bottom-10 md:left-10 md:right-10 md:flex-row md:items-center md:text-sm lg:bottom-12 lg:left-[4vw] lg:right-[4vw]">
+              <p>© 2026 ZHUORAN SONG</p>
+              <p>{contactContent.footerDesign}</p>
+            </footer>
           </div>
         </section>
 
